@@ -1,4 +1,4 @@
-from api.request import RequestHandler
+from utils.api.request import RequestHandler
 from enum import Enum
 from typing import *
 
