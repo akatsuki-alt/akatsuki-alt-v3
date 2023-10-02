@@ -23,13 +23,10 @@ if __name__ == "__main__":
     
     for thread in threads:
         thread.start()
-    
-    # Waits for termination signal
-    while not suspended:
-        time.sleep(1)
-    
+
     # Wait threads
     for thread in threads:
         thread.join()
-    
+
+    # Exit    
     sys.exit(0)
