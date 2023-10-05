@@ -226,3 +226,7 @@ def get_user_first_places(user_id: int, mode=0, relax=0, pages=1) -> List[Score]
         if page>pages:
             break
     return res
+
+def get_map_info(beatmap_id: int) -> Beatmap:
+    res = get(f"https://akatsuki.gg/api/v1/beatmaps?b={beatmap_id}")
+    return res
