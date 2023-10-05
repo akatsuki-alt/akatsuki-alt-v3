@@ -1,6 +1,6 @@
-from config import config
 import logging.handlers
 import logging
+import config
 import gzip
 import sys
 import os
@@ -41,11 +41,11 @@ class GZipRotator:
         os.remove(dest)
 
 
-os.makedirs(config["common"]["log_directory"], exist_ok=True)
+os.makedirs(config.BASE_PATH+"/logs", exist_ok=True)
 
 type = sys.argv[1] if len(sys.argv) > 1 else "debug"
 file_handler = logging.handlers.TimedRotatingFileHandler(
-    filename=f"{config['common']['log_directory']}/{type}.log",
+    filename=f"{config.BASE_PATH}/logs/{type}.log",
     when="midnight",
     interval=1,
     backupCount=5,
