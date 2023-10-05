@@ -1,4 +1,8 @@
+import os
 POSTGRES_USERNAME = "postgres"
 POSTGRES_PASSWORD = "postgres"
 POSTGRES_HOSTNAME = "127.0.0.1"
 POSTGRES_PORT = 5432
+OSU_CLIENT_ID = os.environ['OSU_CLIENT_ID']
+OSU_API_KEY = os.environ['OSU_API_KEY']
+BASE_PATH = "/data"
