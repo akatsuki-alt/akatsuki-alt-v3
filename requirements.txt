@@ -1,3 +1,4 @@
+akatsuki-pp-py==0.9.8
 certifi==2023.7.22
 charset-normalizer==3.3.0
 greenlet==2.0.2
