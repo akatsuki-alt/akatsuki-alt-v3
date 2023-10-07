@@ -8,6 +8,7 @@ from .database import Base
 import logging
 import config
 
+
 class Postgres:
     def __init__(self, username=config.POSTGRES_USERNAME, password=config.POSTGRES_PASSWORD, host=config.POSTGRES_HOSTNAME, port=config.POSTGRES_PORT) -> None:
         self.engine = create_engine(
@@ -41,3 +42,5 @@ class Postgres:
             session.rollback()
         finally:
             session.close()
+
+instance = Postgres()
