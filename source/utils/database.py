@@ -109,6 +109,7 @@ class DBScore(Base):
 
 # Workaround for akatsuki broken rx playtime since 1984...
 class DBAKatsukiPlaytime(Base):
+    __tablename__ = "akatsuki_playtime"
     
     user_id = Column('user_id', Integer, primary_key=True)
     mode = Column('mode', Integer, primary_key=True)
@@ -116,4 +117,10 @@ class DBAKatsukiPlaytime(Base):
     submitted_plays = Column('submitted_plays', Float)
     unsubmitted_plays = Column('unsubmitted_plays', Float)
     most_played = Column('most_played', Float)
+    
+class DBTaskStatus(Base):
+    __tablename__ = "task_status"
+    
+    task_name = Column('task_name', String, primary_key=True)
+    last_run = Column("last_run", Integer)
     
