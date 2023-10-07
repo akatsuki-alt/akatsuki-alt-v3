@@ -4,11 +4,11 @@ from akatsuki_pp_py import Calculator
 from utils.files import BinaryFile, exists
 from utils.logger import get_logger
 
-from database import DBBeatmap
+from utils.database import DBBeatmap
 from ossapi import Beatmap
 import utils.mods as mods
 
-import api.akatsuki
+import utils.api.akatsuki as akatsuki
 import datetime
 import requests
 import config
@@ -17,7 +17,7 @@ DEFAULT_HEADERS = {"user-agent": "akatsukialt!/KompirBot fetch service"}
 logger = get_logger("beatmaps")
 
 def download_beatmap(beatmap_id, force_download=False) -> bool:
-    if exists(f"{config.BASE_PATH}/beatmaps/{beatmap_id}.osu.gz" and not force_download):
+    if exists(f"{config.BASE_PATH}/beatmaps/{beatmap_id}.osu.gz") and not force_download:
         return True
     if result := _osudirect_download(beatmap_id):
         return result
@@ -84,12 +84,18 @@ def beatmap_to_db(beatmap: Beatmap):
             stars_nm, stars_ez, stars_hr, stars_dt, stars_dtez, stars_dthr = get_star_rating(get_calc_beatmap(beatmap.id))
         except:
             logger.warn(f"Can't calculate star rating for map {beatmap.id}", exc_info=True)
-    akat_beatmap = api.akatsuki.get_map_info(beatmap.id)
+    akat_beatmap = akatsuki.get_map_info(beatmap.id)
     approved_date = 0
     if beatmap._beatmapset.ranked_date:
         approved_date = beatmap._beatmapset.ranked_date.timestamp()
     elif beatmap.last_updated:
         approved_date = beatmap.last_updated.timestamp()
+    gamemodes = {'osu': 0, 'taiko': 1, 'fruits': 2, 'mania': 3}
+    status = {'bancho': beatmap.status.value}
+    if akat_beatmap:
+        status['akatsuki'] = akat_beatmap["ranked"]-1
+    else:
+        status['akatsuki'] = 0
     return DBBeatmap(
         beatmap_id=beatmap.id, 
         beatmap_set_id=beatmap.beatmapset_id, 
@@ -98,7 +104,7 @@ def beatmap_to_db(beatmap: Beatmap):
         title=beatmap._beatmapset.title,
         version=beatmap.version,
         mapper=beatmap._beatmapset.creator,
-        ranked_status={'bancho': beatmap.status.value, 'akatsuki': akat_beatmap["ranked"]-1},
+        ranked_status=status,
         last_checked=datetime.datetime.now(),
         ar=beatmap.ar,
         od=beatmap.accuracy,
@@ -109,7 +115,7 @@ def beatmap_to_db(beatmap: Beatmap):
         circles=beatmap.count_circles,
         sliders=beatmap.count_sliders,
         spinners=beatmap.count_spinners,
-        mode=beatmap.mode.value,
+        mode=gamemodes[beatmap.mode.value],
         tags=beatmap._beatmapset.tags,
         packs=",".join(beatmap._beatmapset.pack_tags) if beatmap._beatmapset.pack_tags else "",
         approved_date = approved_date,
