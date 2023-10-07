@@ -3,13 +3,17 @@ services:
     image: postgres:14.1-alpine
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - '5432:5432'
+    expose:
+      - "5432"
+    command: -p 5432
     volumes: 
-      - db:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - ./db:/var/lib/postgresql/data/
+
+#      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
   cache:
     image: redis:6.2-alpine
     restart: always
@@ -23,13 +27,21 @@ services:
       context: .
     ports:
       - 0.0.0.0:4269:4269
+    environment:
+      - OSU_API_KEY=${OSU_API_KEY}
+      - OSU_CLIENT_ID=${OSU_CLIENT_ID}
     depends_on:
       - db
       - cache
-
+    volumes:
+      - ./data:/data
+    links:
+      - db
+      - cache
 volumes:
   db:
     driver: local
   cache:
     driver: local
-  
+  akatsukialt:
+    driver: local
