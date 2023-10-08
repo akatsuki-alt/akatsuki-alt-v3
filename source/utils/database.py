@@ -124,3 +124,19 @@ class DBTaskStatus(Base):
     task_name = Column('task_name', String, primary_key=True)
     last_run = Column("last_run", Integer)
     
+class DBLiveUser(Base):
+    __tablename__ = "live_leaderboard"
+
+    server = Column("server", String, primary_key=True)
+    mode = Column("mode", SmallInteger, primary_key=True)
+    relax = Column("relax", SmallInteger, primary_key=True)
+    global_rank = Column("global_rank", BigInteger, primary_key=True)
+    country_rank = Column("country_rank", BigInteger)
+    ranked_score = Column("ranked_score", BigInteger)
+    total_score = Column("total_score", BigInteger)
+    play_count = Column("play_count", Integer)
+    replays_watched = Column("replays_watched", BigInteger) # copium
+    total_hits = Column("total_hits", Integer)
+    level = Column("level", Float)
+    accuracy = Column("accuracy", Float)
+    pp = Column("pp", Integer)
