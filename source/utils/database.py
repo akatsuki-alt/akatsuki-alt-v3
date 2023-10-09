@@ -22,7 +22,19 @@ class DBUser(Base):
     country = Column("country", String)
     clan = Column("clan_id", Integer, default=0)
     followers = Column("followers", Integer)
+
+class DBClan(Base):
+    __tablename__ = "clans"
     
+    server = Column("server", String, primary_key=True)
+    clan_id = Column("clan_id", Integer, primary_key=True)
+    name = Column("name", String)
+    tag = Column("tag", String)
+    description = Column("description", String)
+    icon = Column("icon", String)
+    owner = Column("owner", Integer)
+    status = Column("status", Integer) # clan join restriction?
+
 class DBStats(Base):
     __tablename__ = "user_statistics"
     

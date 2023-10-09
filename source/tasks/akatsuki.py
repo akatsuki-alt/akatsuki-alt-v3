@@ -105,7 +105,16 @@ class AkatsukiTracker():
                 dbuser.country = user_info['country']
                 dbuser.clan = user_info["clan"]['id']
                 dbuser.followers = user_info['followers']
-                # TODO: add clan to database
+                session.merge(DBClan(
+                    server = "akatsuki",
+                    clan_id = user_info['clan']['id'],
+                    name = user_info['clan']['name'],
+                    tag = user_info['clan']['tag'],
+                    description = user_info['clan']['description'],
+                    icon = user_info['clan']['icon'],
+                    owner = user_info['clan']['owner'],
+                    status = user_info['clan']['status'],
+                ))
                 
                 for user in by_id[user_id]:
                     date = datetime.now().date()
