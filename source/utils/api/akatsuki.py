@@ -213,11 +213,13 @@ def get_user_best(user_id: int, mode=0, relax=0, pages=1) -> List[Score]:
             break
     return res
 
-def get_user_first_places(user_id: int, mode=0, relax=0, pages=1) -> List[Score]:
+def get_user_first_places(user_id: int, mode=0, relax=0, pages=1) -> Tuple[int, List[Score]]:
     res = list()
+    total = 0
     page = 1
     while True:
         req = get(f"https://akatsuki.gg/api/v1/users/scores/first?mode={mode}&p={page}&l=100&rx={relax}&id={user_id}")
+        total = req['total']
         if not req or not req['scores']:
             break
         for score in req['scores']:
@@ -225,7 +227,7 @@ def get_user_first_places(user_id: int, mode=0, relax=0, pages=1) -> List[Score]
         page+=1
         if page>pages:
             break
-    return res
+    return total, res
 
 def get_map_info(beatmap_id: int) -> Beatmap:
     res = get(f"https://akatsuki.gg/api/v1/beatmaps?b={beatmap_id}")
