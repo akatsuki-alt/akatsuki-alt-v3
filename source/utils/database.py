@@ -6,17 +6,8 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import (
-    SmallInteger,
-    ForeignKey,
-    BigInteger,
-    DateTime,
-    Boolean,
-    Integer,
-    Column,
-    String,
-    Float
-)
+from sqlalchemy import *
+
 
 Base = declarative_base()
 
@@ -39,6 +30,7 @@ class DBStats(Base):
     server = Column('server', String, primary_key=True)
     mode = Column('mode', SmallInteger, primary_key=True)
     relax = Column('relax', SmallInteger, primary_key=True)
+    date = Column('date', Date, primary_key=True)
     ranked_score = Column('ranked_score', BigInteger)
     total_score = Column('total_score', BigInteger)
     play_count = Column('play_count', Integer)
@@ -50,6 +42,8 @@ class DBStats(Base):
     pp = Column('pp', Integer)
     global_rank = Column('global_rank', BigInteger)
     country_rank = Column('country_rank', BigInteger)
+    global_score_rank = Column('global_score_rank', BigInteger)
+    country_score_rank = Column('country_score_rank', BigInteger)
     max_combo = Column('max_combo', SmallInteger)
     first_places = Column('first_places', Integer, default=0)
     clears = Column('clears', Integer, default=0)
@@ -141,3 +135,4 @@ class DBLiveUser(Base):
     level = Column("level", Float)
     accuracy = Column("accuracy", Float)
     pp = Column("pp", Integer)
+
