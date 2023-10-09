@@ -24,7 +24,7 @@ class DBUser(Base):
     followers = Column("followers", Integer)
     
 class DBStats(Base):
-    __tablename__ = "statistics"
+    __tablename__ = "user_statistics"
     
     user_id = Column('user_id', Integer, primary_key=True)
     server = Column('server', String, primary_key=True)
