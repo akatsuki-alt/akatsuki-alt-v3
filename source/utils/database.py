@@ -128,6 +128,7 @@ class DBLiveUser(Base):
     __tablename__ = "live_leaderboard"
 
     server = Column("server", String, primary_key=True)
+    user_id = Column("user_id", Integer, primary_key=True)
     mode = Column("mode", SmallInteger, primary_key=True)
     relax = Column("relax", SmallInteger, primary_key=True)
     global_rank = Column("global_rank", BigInteger, primary_key=True)
