@@ -5,6 +5,8 @@ from typing import *
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.akatsuki as akat
+from threading import Thread
+import datetime 
 import time
 
 logger = get_logger("akatsuki_tracker")
@@ -15,6 +17,8 @@ class AkatsukiTracker():
         pass
     
     def main(self):
+        queue_thread = Thread(target=self.process_queue)
+        queue_thread.start()
         while True:    
             with postgres.instance.managed_session() as session:
                 res = session.get(database.DBTaskStatus, "akatsuki_live_lb")
@@ -24,6 +28,39 @@ class AkatsukiTracker():
                     session.commit()
             time.sleep(30)
     
+    def process_queue(self):
+        while True:
+            with postgres.instance.managed_session() as session:
+                queue = session.query(DBUserQueue).filter(datetime.datetime.now().date() > DBUserQueue.date).all()
+                for user in queue:
+                    if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax):
+                        logger.info(f"Fetching {user.user_id} plays")
+                        scores = akat.get_user_best(user.user_id, user.mode, user.relax, pages=100000)
+                        for score in scores:
+                            session.add(score_to_db(score, user_id=user.user_id, mode=user.mode, relax=user.relax))
+                        session.add(DBUserInfo(
+                            server = "akatsuki",
+                            user_id = user.user_id,
+                            mode = user.mode,
+                            relax = user.relax,
+                            score_fetched = datetime.now().date()
+                        ))
+                    first_places = akat.get_user_first_places(user.user_id, user.mode, user.relax, pages=100000)
+                    for score in first_places[1]:
+                        if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == int(score['id'])).first():
+                            session.add()
+                        session.merge(DBUserFirstPlace(
+                            server = "akatsuki",
+                            user_id = user.user_id,
+                            mode = user.mode,
+                            relax = user.relax,
+                            date = user.date,
+                            score_id = int(score['id'])
+                        ))
+                    session.delete(user)
+                    session.commit()
+            time.sleep(30)
+
     def update_live_lb(self) -> List[DBLiveUser]:
         
         start = time.time()
@@ -98,8 +135,8 @@ class AkatsukiTracker():
         
         with postgres.instance.managed_session() as session:
             for user_id in by_id:
-
                 user_info = akat.get_user_info(user_id)
+                logger.info(f"Updating {user_info['username']}")
                 dbuser = session.query(DBUser).filter(DBUser.server == "akatsuki", DBUser.user_id == user_id).first()
                 dbuser.latest_activity = user_info['latest_activity']
                 dbuser.country = user_info['country']
@@ -117,10 +154,11 @@ class AkatsukiTracker():
                 ))
                 
                 for user in by_id[user_id]:
-                    date = datetime.now().date()
+                    date = datetime.datetime.now().date()
                     stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == user.mode, DBStats.relax == user.relax, DBStats.date == date).first()
                     if stats:
                         session.delete(stats)
+                    
                     first_places_count = akat.get_user_first_places(user_id=user_id, mode=user.mode, relax=user.relax)[0]
                     # TODO: Clear count, score rank
                     mode = modes[user.mode]
@@ -144,5 +182,44 @@ class AkatsukiTracker():
                         max_combo = user_info['stats'][user.relax][mode]['max_combo'],
                         first_places = first_places_count
                     ))
+                    session.merge(DBUserQueue(
+                        server = "akatsuki",
+                        user_id = user_id,
+                        mode = user.mode,
+                        relax = user.relax,
+                        date = date,
+                    ))
+                    offset = 0
+                    while offset != -1:
+                        plays = akat.get_user_recent(user_id=user_id, mode=user.mode, relax=user.relax, pages=1, offset=offset)
+                        if not plays:
+                            break
+                        for play in plays:
+                            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(play['id'])).first():
+                                offset = -1
+                                break
+                            session.add(score_to_db(play, user_id, user.mode, user.relax))
             session.commit()
             logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
+
+def score_to_db(score: akat.Score, user_id,  mode, relax):
+    return DBScore(
+            beatmap_id = score['beatmap']['beatmap_id'],
+            server = "akatsuki",
+            user_id = user_id,
+            mode = mode,
+            relax = relax,
+            score_id = int(score['id']),
+            accuracy = score['accuracy'],
+            mods = score['mods'],
+            pp = score['pp'],
+            score = score['score'],
+            combo = score['max_combo'],
+            rank = score['rank'],
+            count_300 = score['count_300'],
+            count_100 = score['count_100'],
+            count_50 = score['count_50'],
+            count_miss = score['count_miss'],
+            completed = score['completed'],
+            date = datetime.datetime.fromisoformat(score["time"][:-1] + "+00:00").timestamp()
+    )
