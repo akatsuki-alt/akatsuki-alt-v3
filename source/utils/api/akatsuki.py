@@ -2,7 +2,7 @@ from utils.api.request import RequestHandler
 from enum import Enum
 from typing import *
 
-handler = RequestHandler(req_min=120)
+handler = RequestHandler(req_min=200)
 
 class GamemodeString(Enum):
     std = 0
