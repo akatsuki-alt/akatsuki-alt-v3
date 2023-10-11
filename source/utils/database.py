@@ -93,16 +93,16 @@ class DBBeatmap(Base):
     approved_date = Column('approved_date', Integer)
 
 class DBScore(Base):
-    __tablename__ = "scores"
+    __tablename__ = "user_scores"
     
     beatmap_id = Column('beatmap_id', Integer, primary_key=True)
-    mode = Column('mode', SmallInteger, primary_key=True)
-    relax = Column('relax', SmallInteger, primary_key=True)
     server = Column('server', String, primary_key=True)
     user_id = Column('user_id', Integer, primary_key=True)
-    score_id = Column('score_id', BigInteger)
+    mode = Column('mode', SmallInteger, primary_key=True)
+    relax = Column('relax', SmallInteger, primary_key=True)
+    score_id = Column('score_id', BigInteger, primary_key=True)
     accuracy = Column('accuracy', Float)
-    mods = Column('mods', SmallInteger)
+    mods = Column('mods', Integer)
     pp = Column('pp', Float)
     score = Column('score', BigInteger)
     combo = Column('combo', SmallInteger)
@@ -111,6 +111,7 @@ class DBScore(Base):
     count_100 = Column('count_100', SmallInteger)
     count_50 = Column('count_50', SmallInteger)
     count_miss = Column('count_miss', SmallInteger)
+    completed = Column('completed', SmallInteger)
     date = Column('date', Integer)
 
 # Workaround for akatsuki broken rx playtime since 1984...
@@ -148,3 +149,30 @@ class DBLiveUser(Base):
     accuracy = Column("accuracy", Float)
     pp = Column("pp", Integer)
 
+class DBUserQueue(Base):
+    __tablename__ = "user_queue"
+    
+    server = Column("server", String, primary_key=True)
+    user_id = Column("user_id", Integer, primary_key=True)
+    mode = Column("mode", SmallInteger, primary_key=True)
+    relax = Column("relax", SmallInteger, primary_key=True)
+    date = Column('date', Date, primary_key=True)
+
+class DBUserInfo(Base):
+    __tablename__ = "user_info"
+
+    server = Column("server", String, primary_key=True)
+    user_id = Column("user_id", Integer, primary_key=True)
+    mode = Column("mode", SmallInteger, primary_key=True)
+    relax = Column("relax", SmallInteger, primary_key=True)
+    score_fetched = Column('score_fetched', Date, primary_key=True)
+
+class DBUserFirstPlace(Base):
+    __tablename__ = "user_first_places"
+
+    server = Column("server", String, primary_key=True)
+    user_id = Column("user_id", Integer, primary_key=True)
+    mode = Column("mode", SmallInteger, primary_key=True)
+    relax = Column("relax", SmallInteger, primary_key=True)
+    date = Column('date', Date, primary_key=True)
+    score_id = Column('score_id', BigInteger, primary_key=True)
