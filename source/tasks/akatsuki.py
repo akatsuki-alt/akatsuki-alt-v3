@@ -56,7 +56,7 @@ class AkatsukiTracker():
                             relax = user.relax,
                             score_fetched = datetime.datetime.now().date()
                         ))
-                        session.merge(playtime)
+                        session.merge(playtime, load=True)
                     first_places = akat.get_user_first_places(user.user_id, user.mode, user.relax, pages=100000)
                     for score in first_places[1]:
                         if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == int(score['id'])).first():
@@ -223,7 +223,8 @@ class AkatsukiTracker():
                                         score['count_50']  +
                                         score['count_miss']
                                     )) / divisor
-                            session.add(score_to_db(score, user_id, user.mode, user.relax))
+                            session.merge(score_to_db(score, user_id, user.mode, user.relax), load=True)
+                    session.merge(playtime, load=True)
             session.commit()
             logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
 
