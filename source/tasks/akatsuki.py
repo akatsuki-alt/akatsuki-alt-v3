@@ -5,6 +5,7 @@ from typing import *
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.akatsuki as akat
+import utils.beatmaps as beatmaps
 from threading import Thread
 import datetime 
 import time
@@ -33,10 +34,20 @@ class AkatsukiTracker():
             with postgres.instance.managed_session() as session:
                 queue = session.query(DBUserQueue).filter(datetime.datetime.now().date() > DBUserQueue.date).all()
                 for user in queue:
-                    if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax):
+                    logger.info(f"Processing user in queue: {user.user_id}")
+                    if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax).first():
                         logger.info(f"Fetching {user.user_id} plays")
                         scores = akat.get_user_best(user.user_id, user.mode, user.relax, pages=100000)
+                        most_played = akat.get_user_most_played(user.user_id, user.mode, user.relax, pages=10000)
+                        if (playtime := session.get(DBAKatsukiPlaytime, (user.user_id, user.mode, user.relax))) is None:
+                            playtime = DBAKatsukiPlaytime(user_id = user.user_id, mode = user.mode, relax = user.relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
+                        for map in most_played:
+                            if (beatmap := beatmaps.load_beatmap(session, map['beatmap']['beatmap_id'])) is not None:
+                                playtime.most_played += ((beatmap.length/beatmap.max_combo)*30) * map['playcount']
                         for score in scores:
+                            if (beatmap := beatmaps.load_beatmap(session, map['beatmap']['beatmap_id'])) is not None:
+                                divisor = 1.5 if score['mods'] & 64 else 1
+                                playtime.submitted_plays += (beatmap.length)/divisor
                             session.add(score_to_db(score, user_id=user.user_id, mode=user.mode, relax=user.relax))
                         session.add(DBUserInfo(
                             server = "akatsuki",
@@ -45,10 +56,11 @@ class AkatsukiTracker():
                             relax = user.relax,
                             score_fetched = datetime.now().date()
                         ))
+                        session.merge(playtime)
                     first_places = akat.get_user_first_places(user.user_id, user.mode, user.relax, pages=100000)
                     for score in first_places[1]:
                         if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == int(score['id'])).first():
-                            session.add()
+                            session.add(score_to_db(score, user.user_id, user.mode, user.relax))
                         session.merge(DBUserFirstPlace(
                             server = "akatsuki",
                             user_id = user.user_id,
@@ -189,16 +201,29 @@ class AkatsukiTracker():
                         relax = user.relax,
                         date = date,
                     ))
+                    if (playtime := session.get(DBAKatsukiPlaytime, (user.user_id, user.mode, user.relax))) is None:
+                        playtime = DBAKatsukiPlaytime(user_id = user.user_id, mode = user.mode, relax = user.relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
                     offset = 0
                     while offset != -1:
-                        plays = akat.get_user_recent(user_id=user_id, mode=user.mode, relax=user.relax, pages=1, offset=offset)
-                        if not plays:
+                        scores = akat.get_user_recent(user_id=user_id, mode=user.mode, relax=user.relax, pages=1, offset=offset)
+                        if not scores:
                             break
-                        for play in plays:
-                            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(play['id'])).first():
+                        for score in scores:
+                            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(score['id'])).first():
                                 offset = -1
                                 break
-                            session.add(score_to_db(play, user_id, user.mode, user.relax))
+                            if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
+                                divisor = 1.5 if score['mods'] & 64 else 1
+                                if score['completed'] > 1:
+                                    playtime.submitted_plays += (beatmap.length)/divisor
+                                else:
+                                    playtime.unsubmitted_plays += ((beatmap.length/beatmap.max_combo) * (
+                                        score['count_300'] + 
+                                        score['count_100'] + 
+                                        score['count_50']  +
+                                        score['count_miss']
+                                    )) / divisor
+                            session.add(score_to_db(score, user_id, user.mode, user.relax))
             session.commit()
             logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
 
