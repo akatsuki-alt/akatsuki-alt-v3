@@ -81,8 +81,9 @@ def get_star_rating(calc_beatmap: calc_beatmap):
 def load_beatmap(session, beatmap_id: int): 
     beatmap = session.get(DBBeatmap, beatmap_id)
     if not beatmap:
-        beatmap = bancho.client.beatmap(beatmap_id)
-        if not beatmap:
+        try:
+            beatmap = bancho.client.beatmap(beatmap_id)
+        except:
             return
         beatmap = beatmap_to_db(beatmap)
         session.add(beatmap)
