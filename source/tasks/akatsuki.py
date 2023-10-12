@@ -27,6 +27,11 @@ class AkatsukiTracker():
                     self.update_live_lb()
                     session.merge(database.DBTaskStatus(task_name="akatsuki_live_lb", last_run=time.time()), load=True)
                     session.commit()
+                res = session.get(database.DBTaskStatus, "akatsuki_clan_lb")
+                if not res or (time.time()-res.last_run)/60>60:
+                    self.update_clan_lb()
+                    session.merge(database.DBTaskStatus(task_name="akatsuki_clan_lb", last_run=time.time()), load=True)
+                    session.commit()
             time.sleep(30)
     
     def process_queue(self):
@@ -227,6 +232,44 @@ class AkatsukiTracker():
                     session.merge(playtime, load=True)
             session.commit()
             logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
+
+    def update_clan_lb(self):
+        modes = ((0,0),(0,1),(0,2),(1,0),(1,1),(2,0),(2,1),(3,0))
+        start = time.time()
+        logger.info("updating clan leaderboards...")
+        with postgres.instance.managed_session() as session:
+            for mode, relax in modes:
+                clans_first_places = {}
+                apiclans = akat.get_clan_first_leaderboard(mode=mode, relax=relax, pages=10)
+                apiclans_pp = akat.get_clan_leaderboard(mode=mode, relax=relax, pages=10)
+                position = 0
+                for clan, first_places in apiclans:
+                    position += 1
+                    if clan['clan'] not in clans_first_places:
+                        clans_first_places[clan['clan']] = {'tag': clan['tag'], 'first_places': first_places, 'rank': position}
+                for apiclan, stats in apiclans_pp:
+                    if (clan := session.get(DBClan, ("akatsuki", apiclan['id']))) is None:
+                        clan = DBClan(server="akatsuki", clan_id=apiclan['id'], name=apiclan['name'])
+                    if apiclan['id'] in clans_first_places:
+                        clan.tag = clans_first_places[apiclan['id']]['tag']
+                    session.merge(DBClanStats(
+                        server = "akatsuki",
+                        clan_id = apiclan['id'],
+                        mode = mode,
+                        relax = relax,
+                        date = datetime.datetime.now().date(),
+                        global_rank = stats['global_leaderboard_rank'],
+                        global_rank_1s = clans_first_places[apiclan['id']]['rank'] if apiclan['id'] in clans_first_places else -1,
+                        first_places = clans_first_places[apiclan['id']]['first_places'] if apiclan['id'] in clans_first_places else -1,
+                        ranked_score = stats['ranked_score'],
+                        total_score = stats['total_score'],
+                        play_count = stats['playcount'],
+                        accuracy = stats['accuracy'],
+                        pp = stats['pp'],
+                    ))
+                    session.merge(clan)
+                session.commit()
+        logger.info(f"clan leaderboard update took {(time.time()-start)/60:.2f} minutes.")
 
 def score_to_db(score: akat.Score, user_id,  mode, relax):
     return DBScore(
