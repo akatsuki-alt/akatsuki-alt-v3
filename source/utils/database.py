@@ -176,3 +176,20 @@ class DBUserFirstPlace(Base):
     relax = Column("relax", SmallInteger, primary_key=True)
     date = Column('date', Date, primary_key=True)
     score_id = Column('score_id', BigInteger, primary_key=True)
+
+class DBClanStats(Base):
+    __tablename__ = "clan_leaderboard"
+
+    server = Column("server", String, primary_key=True)
+    clan_id = Column("clan_id", Integer, primary_key=True)
+    mode = Column("mode", SmallInteger, primary_key=True)
+    relax = Column("relax", SmallInteger, primary_key=True)
+    date = Column('date', Date, primary_key=True)
+    global_rank = Column("global_rank", BigInteger, primary_key=True)
+    global_rank_1s = Column("global_rank_1s", BigInteger, primary_key=True)
+    ranked_score = Column("ranked_score", BigInteger)
+    total_score = Column("total_score", BigInteger)
+    play_count = Column("play_count", Integer)
+    accuracy = Column("accuracy", Float)
+    first_places = Column("first_places", Integer)
+    pp = Column("pp", Integer)
