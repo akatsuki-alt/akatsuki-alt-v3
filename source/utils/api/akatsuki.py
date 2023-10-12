@@ -246,3 +246,31 @@ def get_user_first_places(user_id: int, mode=0, relax=0, pages=1) -> Tuple[int, 
 def get_map_info(beatmap_id: int) -> Beatmap:
     res = get(f"https://akatsuki.gg/api/v1/beatmaps?b={beatmap_id}")
     return res
+
+def get_clan_first_leaderboard(mode=0, relax=0, pages=1) -> List[Tuple[Clan, int]]:
+    page = 1
+    clans = list()
+    while True:
+        req = get(f"https://akatsuki.gg/api/v1/clans/stats/first?m={mode}&p={page}&l=100&rx={relax}")
+        if not req['clans']:
+            break
+        for clan in req['clans']:
+            clans.append((clan, clan['count']))
+        page += 1
+        if page>pages:
+            break
+    return clans
+
+def get_clan_leaderboard(mode=0, relax=0, pages=1) -> List[Tuple[Clan, ChosenMode]]:
+    page = 1
+    clans = list()
+    while True:
+        req = get(f"https://akatsuki.gg/api/v1/clans/stats/all?m={mode}&p={page}&l=100&rx={relax}")
+        if not req['clans']:
+            break
+        for clan in req['clans']:
+            clans.append((clan, clan['chosen_mode']))
+        page += 1
+        if page>pages:
+            break
+    return clans
