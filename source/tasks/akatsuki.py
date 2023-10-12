@@ -35,7 +35,7 @@ class AkatsukiTracker():
                 queue = session.query(DBUserQueue).filter(datetime.datetime.now().date() > DBUserQueue.date).all()
                 for user in queue:
                     logger.info(f"Processing user in queue: {user.user_id}")
-                    if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax).first():
+                    if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.user_id == user.user_id, DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax).first():
                         logger.info(f"Fetching {user.user_id} plays")
                         scores = akat.get_user_best(user.user_id, user.mode, user.relax, pages=100000)
                         most_played = akat.get_user_most_played(user.user_id, user.mode, user.relax, pages=10000)
@@ -48,7 +48,7 @@ class AkatsukiTracker():
                             if (beatmap := beatmaps.load_beatmap(session, map['beatmap']['beatmap_id'])) is not None:
                                 divisor = 1.5 if score['mods'] & 64 else 1
                                 playtime.submitted_plays += (beatmap.length)/divisor
-                            session.add(score_to_db(score, user_id=user.user_id, mode=user.mode, relax=user.relax))
+                            session.merge(score_to_db(score, user_id=user.user_id, mode=user.mode, relax=user.relax))
                         session.add(DBUserInfo(
                             server = "akatsuki",
                             user_id = user.user_id,
