@@ -5,10 +5,12 @@ from utils.files import BinaryFile, exists
 from utils.logger import get_logger
 
 from utils.database import DBBeatmap
+import utils.postgres as postgres
 from ossapi import Beatmap
 import utils.mods as mods
 
 import utils.api.akatsuki as akatsuki
+import utils.api.bancho as bancho
 import datetime
 import requests
 import config
@@ -75,6 +77,17 @@ def get_star_rating(calc_beatmap: calc_beatmap):
         max_perf = calc.performance(calc_beatmap)
         stars.append(max_perf.difficulty.stars)
     return stars
+
+def load_beatmap(session, beatmap_id: int): 
+    beatmap = session.get(DBBeatmap, beatmap_id)
+    if not beatmap:
+        beatmap = bancho.client.beatmap(beatmap_id)
+        if not beatmap:
+            return
+        beatmap = beatmap_to_db(beatmap)
+        session.add(beatmap)
+        session.commit()
+    return beatmap
 
 def beatmap_to_db(beatmap: Beatmap):
     downloaded = download_beatmap(beatmap.id)
