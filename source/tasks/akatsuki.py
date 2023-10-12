@@ -54,7 +54,7 @@ class AkatsukiTracker():
                             user_id = user.user_id,
                             mode = user.mode,
                             relax = user.relax,
-                            score_fetched = datetime.now().date()
+                            score_fetched = datetime.datetime.now().date()
                         ))
                         session.merge(playtime)
                     first_places = akat.get_user_first_places(user.user_id, user.mode, user.relax, pages=100000)
