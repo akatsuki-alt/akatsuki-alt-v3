@@ -30,6 +30,7 @@ services:
     environment:
       - OSU_API_KEY=${OSU_API_KEY}
       - OSU_CLIENT_ID=${OSU_CLIENT_ID}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
     depends_on:
       - db
       - cache
