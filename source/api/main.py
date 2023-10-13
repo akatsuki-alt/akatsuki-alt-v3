@@ -66,7 +66,8 @@ async def get_user_statistics(server="akatsuki", date=str(datetime.datetime.now(
     return users
 
 @app.get("/leaderboard/clan")
-async def get_clan_leaderboard(server="akatsuki", mode:int=0, relax:int=0, page:int=1, length:int=100, type: str = TypeEnum.pp):
+async def get_clan_leaderboard(server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, length:int=100, type: str = TypeEnum.pp):
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     length = min(100, length)
     users = []
     with postgres.instance.managed_session() as session:
@@ -75,7 +76,7 @@ async def get_clan_leaderboard(server="akatsuki", mode:int=0, relax:int=0, page:
         if type in orders:
             order = orders[type]
         for stats in session.query(DBClanStats).filter(DBClanStats.server == server, DBClanStats.mode == mode, 
-                                                     DBClanStats.relax == relax).order_by(
+                                                     DBClanStats.relax == relax, DBClanStats.date == date).order_by(
                                                          text(order)).offset((page-1)*length).limit(length).all():
             users.append(stats)
     return users
