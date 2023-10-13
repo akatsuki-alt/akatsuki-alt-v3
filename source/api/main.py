@@ -38,7 +38,21 @@ async def get_user_leaderboard(server="akatsuki", mode:int=0, relax:int=0, page:
 @app.get("/leaderboard/user_extra")
 async def get_user_statistics(server="akatsuki", date=str(datetime.datetime.now().date()), mode:int=0, relax:int=0, page:int=1, length:int=100, type: str = TypeEnum.clears):
     length = min(100, length)
-    orders = {'pp': 'global_rank', 'score': 'global_score_rank', 'total_score': 'total_score DESC', 'clears': 'clears DESC', '1s': 'first_places DESC'}
+    orders = {
+        'pp': 'global_rank', 
+        'score': 'global_score_rank', 
+        'total_score': 'total_score DESC', 
+        'clears': 'clears DESC', 
+        '1s': 'first_places DESC', 
+        'xh_count': 'xh_count DESC', 
+        'x_count': 'x_count DESC', 
+        'sh_count': 'sh_count DESC', 
+        's_count': 's_count DESC',
+        'a_count': 'a_count DESC',
+        'b_count': 'b_count DESC',
+        'c_count': 'c_count DESC',
+        'd_count': 'd_count DESC',
+    }
     order = orders['pp']
     if type in orders:
         order = orders[type]
