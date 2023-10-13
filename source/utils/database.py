@@ -59,6 +59,14 @@ class DBStats(Base):
     max_combo = Column('max_combo', SmallInteger)
     first_places = Column('first_places', Integer, default=0)
     clears = Column('clears', Integer, default=0)
+    xh_count  = Column('xh_count', Integer, default=0)
+    x_count   = Column('x_count', Integer, default=0)
+    sh_count  = Column('sh_count', Integer, default=0)
+    s_count   = Column('s_count', Integer, default=0)
+    a_count   = Column('a_count', Integer, default=0)
+    b_count   = Column('b_count', Integer, default=0)
+    c_count   = Column('c_count', Integer, default=0)
+    d_count   = Column('d_count', Integer, default=0)
 
 class DBBeatmap(Base):
     __tablename__ = "beatmaps"
@@ -203,8 +211,8 @@ class DBClanStats(Base):
     mode = Column("mode", SmallInteger, primary_key=True)
     relax = Column("relax", SmallInteger, primary_key=True)
     date = Column('date', Date, primary_key=True)
-    global_rank = Column("global_rank", BigInteger, primary_key=True)
-    global_rank_1s = Column("global_rank_1s", BigInteger, primary_key=True)
+    global_rank = Column("global_rank", BigInteger)
+    global_rank_1s = Column("global_rank_1s", BigInteger)
     ranked_score = Column("ranked_score", BigInteger)
     total_score = Column("total_score", BigInteger)
     play_count = Column("play_count", Integer)

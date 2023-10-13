@@ -207,6 +207,63 @@ class AkatsukiTracker():
                             DBScore.mode == user.mode, 
                             DBScore.relax == user.relax, 
                             DBScore.completed == 3).count(),
+                        xh_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "SSHD"
+                            ).count(),
+                        x_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "SS"
+                            ).count(),
+                        s_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "S"
+                            ).count(),
+                        sh_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "SHD"
+                            ).count(),
+                        a_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "A"
+                            ).count(),
+                        b_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "B"
+                            ).count(),
+                        c_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "C"
+                            ).count(),
+                        d_count = session.query(DBScore).filter(
+                            DBScore.user_id == user_id, 
+                            DBScore.mode == user.mode, 
+                            DBScore.relax == user.relax, 
+                            DBScore.completed == 3,
+                            DBScore.rank == "D"
+                            ).count(),
+                        
                         first_places = first_places_count
                     )
                     if (score_user := session.get(DBLiveUserScore, ("akatsuki", user_id, user.mode, user.relax))) is not None:
