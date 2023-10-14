@@ -4,7 +4,8 @@ from tasks.beatmaps import BeatmapMaintainer
 from tasks.statistics import StatisticsTracker
 from tasks.akatsuki import AkatsukiTracker
 
-import discordbot.bot 
+import discordbot.bot
+import gamebot.bot
 import api.main
 import signal
 import time
@@ -24,7 +25,8 @@ if __name__ == "__main__":
         Thread(target=StatisticsTracker().main),
         Thread(target=AkatsukiTracker().main),
         Thread(target=api.main.main),
-        Thread(target=discordbot.bot.main)
+        Thread(target=discordbot.bot.main),
+        Thread(target=gamebot.bot.main)
     ]
     
     for thread in threads:
