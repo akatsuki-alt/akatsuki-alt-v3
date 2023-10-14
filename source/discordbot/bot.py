@@ -1,3 +1,4 @@
+from utils.logger import get_logger
 from discord.flags import Intents
 from discord import Message
 from typing import *
@@ -5,6 +6,8 @@ from typing import *
 import discord
 import config
 import shlex
+
+logger = get_logger("discord_bot")
 
 class Command:
     
@@ -37,7 +40,7 @@ class Client(discord.Client):
                     try:
                         await command.run(message, split[1:])
                     except:
-                        pass
+                        logger.error(f"Failed to execute {message.content}!", exc_info=True)
             
 intents = discord.Intents.default()
 intents.message_content = True

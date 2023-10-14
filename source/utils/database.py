@@ -219,3 +219,12 @@ class DBClanStats(Base):
     accuracy = Column("accuracy", Float)
     first_places = Column("first_places", Integer)
     pp = Column("pp", Integer)
+
+class DBDiscordLink(Base):
+    __tablename__ = "discord_users"
+
+    discord_id = Column("discord_id", BigInteger, primary_key=True)
+    default_server = Column("default_server", String)
+    default_mode = Column("default_mode", SmallInteger, default=0)
+    default_relax = Column("default_relax", SmallInteger, default=0)
+    servers = Column("servers", JSONB, default={})
