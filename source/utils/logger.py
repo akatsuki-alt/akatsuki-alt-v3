@@ -1,3 +1,5 @@
+from discord_logging.handler import DiscordHandler
+
 import logging.handlers
 import logging
 import config
@@ -56,10 +58,18 @@ file_handler.setFormatter(ColorFormatter())
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(ColorFormatter())
 
+discord_handler = DiscordHandler(
+    "Logging", 
+    config.DISCORD_LOGGING_WEBHOOK, 
+    avatar_url="https://www.davelabowitz.com/wp-content/uploads/Sisyphus-e1557869810488.jpg"
+)
+discord_format = logging.Formatter("%(message)s")
+discord_handler.setFormatter(discord_format)
+
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] - <%(name)s> %(levelname)s: %(message)s",
-    handlers=[file_handler, console_handler],
+    handlers=[file_handler, console_handler, discord_handler],
 )
 
 logger = logging.getLogger(type)

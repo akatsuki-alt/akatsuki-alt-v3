@@ -31,6 +31,7 @@ services:
       - OSU_API_KEY=${OSU_API_KEY}
       - OSU_CLIENT_ID=${OSU_CLIENT_ID}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_LOGGING_WEBHOOK=${DISCORD_LOGGING_WEBHOOK}
     depends_on:
       - db
       - cache
