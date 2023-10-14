@@ -73,7 +73,6 @@ class BeatmapMaintainer():
         MARKDOWN_URL_REGEX = r"\[(.*?)\]\((\S*)(?:\s'(.*?)')?\)"
         found: List[selfbot.Message] = list()
         for x in range(0, 10000000 if full_run else 250 ,25):
-            logger.info(f"crawling {x}...")
             messages = selfbot.search_channel(offset=x)
             if not messages:
                 logger.info('messages done.')
