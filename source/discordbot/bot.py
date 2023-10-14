@@ -8,7 +8,7 @@ import shlex
 
 class Command:
     
-    def __init__(self, name: str, description: str, help: str, triggers: List[str]) -> None:
+    def __init__(self, name: str, description: str, triggers: List[str], help: str = "no help available.") -> None:
         self.name = name
         self.description = description
         self.help = help
