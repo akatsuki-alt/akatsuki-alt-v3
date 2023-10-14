@@ -7,7 +7,8 @@ import utils.database as database
 import utils.api.akatsuki as akat
 import utils.beatmaps as beatmaps
 from threading import Thread
-import datetime 
+from datetime import date
+import datetime
 import time
 
 logger = get_logger("akatsuki_tracker")
@@ -79,6 +80,8 @@ class AkatsukiTracker():
                             date = user.date,
                             score_id = int(score['id'])
                         ))
+                    user_info = akat.get_user_info(user_id=user.user_id)
+                    update_user(session, user.user_id, user.mode, user.relax, user.date, user_info, add_to_queue=False, fetch_recent=False)
                     session.delete(user)
                     session.commit()
             time.sleep(30)
@@ -149,7 +152,6 @@ class AkatsukiTracker():
         logger.info("Updating users started.")
         
         by_id: Dict[int, List[DBLiveUser]] = {}
-        modes = ['std', 'taiko', 'ctb', 'mania']
         for user in users:
             if user.user_id not in by_id:
                 by_id[user.user_id] = []
@@ -177,130 +179,7 @@ class AkatsukiTracker():
                 
                 for user in by_id[user_id]:
                     date = datetime.datetime.now().date()
-                    stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == user.mode, DBStats.relax == user.relax, DBStats.date == date).first()
-                    if stats:
-                        session.delete(stats)
-                    
-                    first_places_count = akat.get_user_first_places(user_id=user_id, mode=user.mode, relax=user.relax)[0]
-                    # TODO: Clear count, score rank
-                    mode = modes[user.mode]
-                    stats = DBStats(
-                        server = "akatsuki",
-                        user_id = user_id,
-                        mode = user.mode,
-                        relax = user.relax,
-                        date = date,
-                        ranked_score = user_info['stats'][user.relax][mode]["ranked_score"],
-                        total_score = user_info['stats'][user.relax][mode]["total_score"],
-                        play_count = user_info['stats'][user.relax][mode]["playcount"],
-                        play_time = user_info['stats'][user.relax][mode]['playtime'],
-                        replays_watched = user_info['stats'][user.relax][mode]['replays_watched'],
-                        total_hits = user_info['stats'][user.relax][mode]['total_hits'],
-                        level = user_info['stats'][user.relax][mode]['level'],
-                        accuracy = user_info['stats'][user.relax][mode]['accuracy'],
-                        pp = user_info['stats'][user.relax][mode]['pp'],
-                        global_rank = user_info['stats'][user.relax][mode]['global_leaderboard_rank'],
-                        country_rank = user_info['stats'][user.relax][mode]['country_leaderboard_rank'],
-                        max_combo = user_info['stats'][user.relax][mode]['max_combo'],
-                        clears = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3).count(),
-                        xh_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "SSHD"
-                            ).count(),
-                        x_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "SS"
-                            ).count(),
-                        s_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "S"
-                            ).count(),
-                        sh_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "SHD"
-                            ).count(),
-                        a_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "A"
-                            ).count(),
-                        b_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "B"
-                            ).count(),
-                        c_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "C"
-                            ).count(),
-                        d_count = session.query(DBScore).filter(
-                            DBScore.user_id == user_id, 
-                            DBScore.mode == user.mode, 
-                            DBScore.relax == user.relax, 
-                            DBScore.completed == 3,
-                            DBScore.rank == "D"
-                            ).count(),
-                        
-                        first_places = first_places_count
-                    )
-                    if (score_user := session.get(DBLiveUserScore, ("akatsuki", user_id, user.mode, user.relax))) is not None:
-                        stats.global_score_rank = score_user.global_rank
-                        stats.country_score_rank = score_user.country_rank
-                    session.merge(stats)
-                    session.merge(DBUserQueue(
-                        server = "akatsuki",
-                        user_id = user_id,
-                        mode = user.mode,
-                        relax = user.relax,
-                        date = date,
-                    ))
-                    if (playtime := session.get(DBAKatsukiPlaytime, (user.user_id, user.mode, user.relax))) is None:
-                        playtime = DBAKatsukiPlaytime(user_id = user.user_id, mode = user.mode, relax = user.relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
-                    offset = 0
-                    while offset != -1:
-                        scores = akat.get_user_recent(user_id=user_id, mode=user.mode, relax=user.relax, pages=1, offset=offset)
-                        if not scores:
-                            break
-                        for score in scores:
-                            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(score['id'])).first():
-                                offset = -1
-                                break
-                            if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
-                                divisor = 1.5 if score['mods'] & 64 else 1
-                                if score['completed'] > 1:
-                                    playtime.submitted_plays += (beatmap.length)/divisor
-                                else:
-                                    playtime.unsubmitted_plays += ((beatmap.length/beatmap.max_combo) * (
-                                        score['count_300'] + 
-                                        score['count_100'] + 
-                                        score['count_50']  +
-                                        score['count_miss']
-                                    )) / divisor
-                            session.merge(score_to_db(score, user_id, user.mode, user.relax), load=True)
-                    session.merge(playtime, load=True)
+                    update_user(session, user_id, user.mode, user.relax, date, user_info)
             session.commit()
             logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
 
@@ -386,6 +265,137 @@ class AkatsukiTracker():
                     session.merge(clan)
                 session.commit()
         logger.info(f"clan leaderboard update took {(time.time()-start)/60:.2f} minutes.")
+
+def update_user(session, user_id: int, mode: int, relax: int, date: date, user_info: akat.User, add_to_queue=True, fetch_recent=True):
+    stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == mode, DBStats.relax == relax, DBStats.date == date).first()
+    if stats:
+        session.delete(stats)
+    first_places_count = akat.get_user_first_places(user_id=user_id, mode=mode, relax=relax)[0]
+    stats = stats_to_db(session, user_id, mode, relax, date, first_places_count, user_info)
+    if (score_user := session.get(DBLiveUserScore, ("akatsuki", user_id, mode, relax))) is not None:
+        stats.global_score_rank = score_user.global_rank
+        stats.country_score_rank = score_user.country_rank
+    session.merge(stats)
+    if add_to_queue:
+        session.merge(DBUserQueue(
+            server = "akatsuki",
+            user_id = user_id,
+            mode = mode,
+            relax = relax,
+            date = date,
+    ))
+    if not fetch_recent:
+        return
+    if (playtime := session.get(DBAKatsukiPlaytime, (user_id, mode, relax))) is None:
+        playtime = DBAKatsukiPlaytime(user_id = user_id, mode = mode, relax = relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
+    offset = 0
+    while offset != -1:
+        scores = akat.get_user_recent(user_id=user_id, mode=mode, relax=relax, pages=1, offset=offset)
+        if not scores:
+            break
+        for score in scores:
+            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(score['id'])).first():
+                offset = -1
+                break
+            if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
+                divisor = 1.5 if score['mods'] & 64 else 1
+                if score['completed'] > 1:
+                    playtime.submitted_plays += (beatmap.length)/divisor
+                else:
+                    playtime.unsubmitted_plays += ((beatmap.length/beatmap.max_combo) * (
+                        score['count_300'] + 
+                        score['count_100'] + 
+                        score['count_50']  +
+                        score['count_miss']
+                    )) / divisor
+            session.merge(score_to_db(score, user_id, mode, relax), load=True)
+    session.merge(playtime, load=True)
+
+def stats_to_db(session, user_id: int, mode: int, relax: int, date: date, first_places_count: int, user_info: akat.User):
+    modes = ['std', 'taiko', 'ctb', 'mania']
+    mode_str = modes[mode]
+    return DBStats(
+        server = "akatsuki",
+        user_id = user_id,
+        mode = mode,
+        relax = relax,
+        date = date,
+        ranked_score = user_info['stats'][relax][mode_str]["ranked_score"],
+        total_score = user_info['stats'][relax][mode_str]["total_score"],
+        play_count = user_info['stats'][relax][mode_str]["playcount"],
+        play_time = user_info['stats'][relax][mode_str]['playtime'],
+        replays_watched = user_info['stats'][relax][mode_str]['replays_watched'],
+        total_hits = user_info['stats'][relax][mode_str]['total_hits'],
+        level = user_info['stats'][relax][mode_str]['level'],
+        accuracy = user_info['stats'][relax][mode_str]['accuracy'],
+        pp = user_info['stats'][relax][mode_str]['pp'],
+        global_rank = user_info['stats'][relax][mode_str]['global_leaderboard_rank'],
+        country_rank = user_info['stats'][relax][mode_str]['country_leaderboard_rank'],
+        max_combo = user_info['stats'][relax][mode_str]['max_combo'],
+        clears = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3).count(),
+        xh_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "SSHD"
+            ).count(),
+        x_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "SS"
+            ).count(),
+        s_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "S"
+            ).count(),
+        sh_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "SHD"
+            ).count(),
+        a_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "A"
+            ).count(),
+        b_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "B"
+            ).count(),
+        c_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "C"
+            ).count(),
+        d_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "D"
+            ).count(),
+        
+        first_places = first_places_count
+    )
 
 def score_to_db(score: akat.Score, user_id,  mode, relax):
     return DBScore(
