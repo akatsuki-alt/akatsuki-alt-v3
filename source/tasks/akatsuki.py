@@ -311,9 +311,13 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
             session.merge(score_to_db(score, user_id, mode, relax), load=True)
     session.merge(playtime, load=True)
 
-def stats_to_db(session, user_id: int, mode: int, relax: int, date: date, first_places_count: int, user_info: akat.User):
+def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, date: date, first_places_count: int, user_info: akat.User):
     modes = ['std', 'taiko', 'ctb', 'mania']
     mode_str = modes[mode]
+    play_time = user_info['stats'][relax][mode_str]['playtime']
+    if relax > 0:
+        if (calculated_playtime := session.get(DBAKatsukiPlaytime, user_id, mode, relax)) is not None:
+            play_time = int(calculated_playtime.submitted_plays + calculated_playtime.unsubmitted_plays + calculated_playtime.most_played)
     return DBStats(
         server = "akatsuki",
         user_id = user_id,
@@ -323,7 +327,7 @@ def stats_to_db(session, user_id: int, mode: int, relax: int, date: date, first_
         ranked_score = user_info['stats'][relax][mode_str]["ranked_score"],
         total_score = user_info['stats'][relax][mode_str]["total_score"],
         play_count = user_info['stats'][relax][mode_str]["playcount"],
-        play_time = user_info['stats'][relax][mode_str]['playtime'],
+        play_time = play_time,
         replays_watched = user_info['stats'][relax][mode_str]['replays_watched'],
         total_hits = user_info['stats'][relax][mode_str]['total_hits'],
         level = user_info['stats'][relax][mode_str]['level'],
