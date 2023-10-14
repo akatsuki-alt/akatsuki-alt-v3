@@ -164,6 +164,14 @@ def get_leaderboard(mode=0, relax=0, pages=1, sort: SortOption = SortOption.PP) 
             break
     return res
 
+def lookup_user(username: str) -> Tuple[str, int] | None:
+    req = get(f"https://akatsuki.gg/api/v1/users/lookup?name={username}")
+    if not req or not req['users']:
+        return
+    for user in req['users']:
+        if user['username'].lower() == username.lower():
+            return user['username'], user['id']
+
 def get_user_info(user_id: int) -> User:
     req = get(f"https://akatsuki.gg/api/v1/users/full?id={user_id}")
     if not req:
