@@ -316,7 +316,7 @@ def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, 
     mode_str = modes[mode]
     play_time = user_info['stats'][relax][mode_str]['playtime']
     if relax > 0:
-        if (calculated_playtime := session.get(DBAKatsukiPlaytime, user_id, mode, relax)) is not None:
+        if (calculated_playtime := session.get(DBAKatsukiPlaytime, (user_id, mode, relax))) is not None:
             play_time = int(calculated_playtime.submitted_plays + calculated_playtime.unsubmitted_plays + calculated_playtime.most_played)
     return DBStats(
         server = "akatsuki",
