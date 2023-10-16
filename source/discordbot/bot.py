@@ -1,9 +1,12 @@
+from utils.api.servers import servers, Server
+from utils.database import DBDiscordLink
 from difflib import SequenceMatcher
 from utils.logger import get_logger
 from discord.flags import Intents
 from discord import Message
 from typing import *
 
+import utils.postgres as postgres
 import discord
 import config
 import shlex
@@ -20,7 +23,19 @@ class Command:
     
     async def run(self, message: Message, arguments: List[str]):
         pass
+    
+    def get_link(self, message: Message) -> DBDiscordLink | None:
+        with postgres.instance.managed_session() as session:
+            return session.get(DBDiscordLink, (message.author.id))
 
+    async def show_link_warning(self, message: Message):
+        await message.reply(f"You don't have an account linked!")
+        
+    def get_server(self, server_name: str) -> Server | None:
+        for server in servers:
+            if server.server_name.lower() == server_name.lower():
+                return server
+    
 class Client(discord.Client):
 
     def __init__(self, intents: Intents, commands: List[Command], prefix="!") -> None:
