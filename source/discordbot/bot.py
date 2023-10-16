@@ -7,6 +7,7 @@ from discord import Message
 from typing import *
 
 import utils.postgres as postgres
+import traceback
 import discord
 import config
 import shlex
@@ -57,8 +58,13 @@ class Client(discord.Client):
                     try:
                         await command.run(message, split[1:])
                         return
-                    except:
+                    except Exception as e:
                         logger.error(f"Failed to execute {message.content}!", exc_info=True)
+                        await message.reply(embed=discord.Embed(
+                            title="An error occurred!", 
+                            description=f'{type(e).__name__}: {e} ```{traceback.format_exc()}```'
+                            ))
+                        return
                 else:
                     for trigger in command.triggers:
                         if (ratio := SequenceMatcher(None, trigger, split[0]).ratio()) > most_similar[0]:
