@@ -1,0 +1,3 @@
+[submodule "source/utils/api/akatsukialt"]
+	path = source/utils/api/akatsukialt
+	url = git@github.com:akatsuki-alt/akatalt-api-wrapper.git
