@@ -1,3 +1,4 @@
+from sqlalchemy.orm.attributes import flag_modified
 from utils.database import DBDiscordLink
 
 from utils.api.servers import servers
@@ -41,6 +42,7 @@ class LinkCommand(Command):
             if not dblink.servers:
                 dblink.servers = {}
             dblink.servers[server_link.server_name] = lookup[1]
+            flag_modified(dblink, "servers")
             session.merge(dblink)
             session.commit()
             await message.reply(f"Linked as {lookup[0]} on {server_link.server_name}!")
