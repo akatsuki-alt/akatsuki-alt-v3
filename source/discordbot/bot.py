@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 from utils.logger import get_logger
 from discord.flags import Intents
 from discord import Message
@@ -35,13 +36,20 @@ class Client(discord.Client):
             return
         if message.content.startswith("!"):
             split = shlex.split(message.content[1:])
+            most_similar = (0, 'none')
             for command in self.commands:
                 if split[0] in command.triggers:
                     try:
                         await command.run(message, split[1:])
+                        return
                     except:
                         logger.error(f"Failed to execute {message.content}!", exc_info=True)
-            
+                else:
+                    for trigger in command.triggers:
+                        if (ratio := SequenceMatcher(None, trigger, split[0]).ratio()) > most_similar[0]:
+                            most_similar = (ratio, trigger)
+            await message.reply(f"Unknown command! Did you mean {most_similar[1]}?")
+
 intents = discord.Intents.default()
 intents.message_content = True
 commands: List[Command] = list()
