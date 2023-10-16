@@ -37,7 +37,7 @@ def _osudirect_download(beatmap_id) -> bool:
         logger.warning(f"GET {response.url} {response.status_code}")
         logger.warning(f"{response.text}")
         return False
-    logger.info(f"GET {response.url} {response.status_code}")
+    #logger.info(f"GET {response.url} {response.status_code}")
     file = BinaryFile(f"{config.BASE_PATH}/beatmaps/{beatmap_id}.osu.gz")
     file.data = response.content
     file.save_data()
@@ -88,6 +88,9 @@ def load_beatmap(session, beatmap_id: int):
         beatmap = beatmap_to_db(beatmap)
         session.add(beatmap)
         session.commit()
+    if not beatmap.max_combo:
+        logger.error(f"{beatmap.beatmap_id} IS LIKELY BOTCHED (max_combo == Null)")
+        beatmap.max_combo = 1
     return beatmap
 
 def beatmap_to_db(beatmap: Beatmap):
