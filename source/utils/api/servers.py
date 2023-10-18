@@ -10,8 +10,11 @@ class Server:
         self.supports_ap = supports_ap
         self.notes = notes
     
-    def lookup_user(self, user: Union[str, int]):
+    def lookup_user(self, user: Union[str, int]) -> Tuple[str, int]:
         pass
+    
+    def get_pfp(self, user: int) -> str:
+        return "https://external-preview.redd.it/STe7DUG0S90McIj6VAPErso141_cmtEjPJkBGn9eTJw.png?auto=webp&s=94ee7479ec8d4ebc4c6c7a3971b32a73bfa1d81b"
 
 class Akatsuki(Server):
     
@@ -26,6 +29,9 @@ class Akatsuki(Server):
             return user_info['username'], user_info['id']
         else:
             return akatsuki.lookup_user(user)
+
+    def get_pfp(self, user: int) -> str:
+        return f"https://a.akatsuki.gg/{user}"
 
 
 servers = [Akatsuki()]
