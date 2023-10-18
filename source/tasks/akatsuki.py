@@ -158,6 +158,8 @@ class AkatsukiTracker():
             by_id[user.user_id].append(user)
         
         with postgres.instance.managed_session() as session:
+            date = datetime.datetime.now().date()
+            yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).date()
             for user_id in by_id:
                 user_info = akat.get_user_info(user_id)
                 logger.info(f"Updating {user_info['username']}")
@@ -175,13 +177,64 @@ class AkatsukiTracker():
                     icon = user_info['clan']['icon'],
                     owner = user_info['clan']['owner'],
                     status = user_info['clan']['status'],
-                ))
-                
+                ))                
                 for user in by_id[user_id]:
-                    date = datetime.datetime.now().date()
                     update_user(session, user_id, user.mode, user.relax, date, user_info)
+            inactive_updated = 0
+            for user in session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.date == date).all():
+                if user.user_id in by_id:
+                    continue
+                inactive_updated += 1
+                if (pp := session.get(DBLiveUser, ("akatsuki", user.user_id, user.mode, user.relax))) is not None:
+                    user.global_rank = pp.global_rank
+                    user.country_rank = pp.country_rank
+                if (score := session.get(DBLiveUserScore, ("akatsuki", user.user_id, user.mode, user.relax))) is not None:
+                    user.global_score_rank = score.global_rank
+                    user.country_score_rank = score.country_rank
+                session.merge(user)
+            for user in session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.date == yesterday).all():
+                if not session.get(DBStats, (user.user_id, "akatsuki", user.mode, user.relax, date)):
+                    inactive_updated += 1
+                    stats = DBStats(
+                        user_id = user.user_id,
+                        server = "akatsuki",
+                        mode = user.mode,
+                        relax = user.relax,
+                        date = date,
+                        ranked_score = user.ranked_score,
+                        total_score = user.total_score,
+                        play_count = user.play_count,
+                        play_time = user.play_time,
+                        replays_watched = user.replays_watched,
+                        total_hits = user.total_hits,
+                        level = user.level,
+                        accuracy = user.accuracy,
+                        pp = user.pp,
+                        global_rank = -1,
+                        country_rank = -1,
+                        global_score_rank = -1,
+                        country_score_rank = -1,
+                        max_combo = user.max_combo,
+                        first_places = user.first_places,
+                        clears = user.clears,
+                        xh_count = user.xh_count,
+                        x_count = user.x_count,
+                        sh_count = user.sh_count,
+                        s_count = user.s_count,
+                        a_count = user.a_count,
+                        b_count = user.b_count,
+                        c_count = user.c_count,
+                        d_count = user.d_count
+                    )
+                    if (pp := session.get(DBLiveUser, ("akatsuki", stats.user_id, stats.mode, stats.relax))) is not None:
+                        stats.global_rank = pp.global_rank
+                        stats.country_rank = pp.country_rank
+                    if (score := session.get(DBLiveUserScore, ("akatsuki", stats.user_id, stats.mode, stats.relax))) is not None:
+                        stats.global_score_rank = score.global_rank
+                        stats.country_score_rank = score.country_rank
+                    session.add(stats)
             session.commit()
-            logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes.")
+            logger.info(f"Users update took {(time.time()-start)/60:.2f} minutes. (active: {len(users)}, inactive: {inactive_updated})")
 
     def update_score_lb(self):
         modes = ((0,0),(0,1),(0,2),(1,0),(1,1),(2,0),(2,1),(3,0))
