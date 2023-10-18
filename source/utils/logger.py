@@ -63,6 +63,7 @@ discord_handler = DiscordHandler(
     config.DISCORD_LOGGING_WEBHOOK, 
     avatar_url="https://www.davelabowitz.com/wp-content/uploads/Sisyphus-e1557869810488.jpg"
 )
+discord_handler.setLevel(logging.WARN)
 discord_format = logging.Formatter("%(message)s")
 discord_handler.setFormatter(discord_format)
 
