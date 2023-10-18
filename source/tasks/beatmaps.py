@@ -41,6 +41,7 @@ class BeatmapMaintainer():
     
     def update_bancho_maps(self):
         logger.info("Fetching bancho beatmaps...")
+        added = 0
         with postgres.instance.managed_session() as session:
             try:
                 cursor = None
@@ -56,7 +57,8 @@ class BeatmapMaintainer():
                                 found = True
                                 break
                             else:
-                                logger.info(f"Adding {beatmap.id}")
+                                added += 1
+                                #logger.info(f"Adding {beatmap.id}")
                                 beatmap._beatmapset = beatmapset
                                 session.merge(beatmaps.beatmap_to_db(beatmap), load=True)
                         session.commit()
@@ -67,7 +69,8 @@ class BeatmapMaintainer():
                         break
             except:
                 pass
-    
+        logger.info(f"Added {added} bancho beatmaps.")
+
     def update_akatsuki_maps(self, full_run=False):
         logger.info("Fetching akatsuki beatmaps...")
         MARKDOWN_URL_REGEX = r"\[(.*?)\]\((\S*)(?:\s'(.*?)')?\)"
@@ -94,7 +97,7 @@ class BeatmapMaintainer():
         logger.info(f"Found {len(maps)} Akatsuki updates")
         with postgres.instance.managed_session() as session:
             for id, _ in maps.items():
-                logger.info(f"updating {id}")
+                #logger.info(f"updating {id}")
                 try:
                     beatmap = bancho.client.beatmap(beatmap_id=id)
                     time.sleep(0.5)
