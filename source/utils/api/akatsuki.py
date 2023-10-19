@@ -221,11 +221,11 @@ def get_user_best(user_id: int, mode=0, relax=0, pages=1) -> List[Score]:
             break
     return res
 
-def get_user_recent(user_id: int, mode=0, relax=0, pages=1, offset=0) -> List[Score]:
+def get_user_recent(user_id: int, mode=0, relax=0, pages=1, length=100, offset=0) -> List[Score]:
     res = list()
     page = 1
     while True:
-        req = get(f"https://akatsuki.gg/api/v1/users/scores/recent?mode={mode}&p={page+offset}&l=100&rx={relax}&id={user_id}")
+        req = get(f"https://akatsuki.gg/api/v1/users/scores/recent?mode={mode}&p={page+offset}&l={length}&rx={relax}&id={user_id}")
         if not req or not req['scores']:
             break
         for score in req['scores']:

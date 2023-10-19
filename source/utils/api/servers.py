@@ -16,6 +16,9 @@ class Server:
     def get_pfp(self, user: int) -> str:
         return "https://external-preview.redd.it/STe7DUG0S90McIj6VAPErso141_cmtEjPJkBGn9eTJw.png?auto=webp&s=94ee7479ec8d4ebc4c6c7a3971b32a73bfa1d81b"
 
+    def get_recent(self, user: int, mode: int, relax: int) -> akatsuki.Score | None:
+        return
+
 class Akatsuki(Server):
     
     def __init__(self) -> None:
@@ -33,5 +36,8 @@ class Akatsuki(Server):
     def get_pfp(self, user: int) -> str:
         return f"https://a.akatsuki.gg/{user}"
 
+    def get_recent(self, user: int, mode: int, relax: int) -> akatsuki.Score | None:
+        if (recent := akatsuki.get_user_recent(user_id=user, mode=mode, relax=relax, length=1)):
+            return recent[0]
 
 servers = [Akatsuki()]
