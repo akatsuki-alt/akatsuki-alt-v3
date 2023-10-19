@@ -56,10 +56,12 @@ class ShowCommand(Command):
         else:
             cache_file = DataFile(cache_path)
             cache_file.data = [(time.time(), (mode, relax), stats.__dict__.copy())]
-            del cache_file.data[2]['api']
+            del cache_file.data[0][2]['api']
+            del cache_file.data[0][2]['date']
             cache_file.save_data()
         last_cached = stats.__dict__.copy()
         del last_cached['api']
+        del last_cached['date']
         for cached in cache_file.data:
             if cached[1][0] == mode and cached[1][1] == relax:
                 last_cached = cached[2]
@@ -68,9 +70,13 @@ class ShowCommand(Command):
         total_score  = self.get_gain(last_cached['total_score'], stats.total_score)
         total_hits   = self.get_gain(last_cached['total_hits'], stats.total_hits)
         play_count = self.get_gain(last_cached['play_count'], stats.play_count)
-        play_time = self.get_gain(last_cached['ranked_score'], stats.play_time)
+        play_time = self.get_gain(last_cached['play_time'], stats.play_time)
         replays_watched = self.get_gain(last_cached['replays_watched'], stats.replays_watched)
-        level = f"(+{int(str(stats.level - last_cached['level']).split['.'][1])*100})%" # no float point problems :D
+        level = stats.level - last_cached['level']
+        if level:
+            level = f"(+{level*100:.2f}%)"
+        else:
+            level = ""
         accuracy = self.get_gain(last_cached['accuracy'], stats.accuracy)
         max_combo = self.get_gain(last_cached['max_combo'], stats.max_combo)
         global_rank = self.get_gain(last_cached['global_rank'], stats.global_rank, reverse=True)
@@ -79,17 +85,19 @@ class ShowCommand(Command):
         global_score_rank = self.get_gain(last_cached['global_score_rank'], stats.global_score_rank, reverse=True)
         country_score_rank = self.get_gain(last_cached['country_score_rank'], stats.country_score_rank, reverse=True)
         first_places = self.get_gain(last_cached['first_places'], stats.first_places)
-        clears = self.get_gain(last_cached['ranked_score'], stats.clears)
+        clears = self.get_gain(last_cached['clears'], stats.clears)
+        current_level = int(stats.level)
+        level_percentage = (stats.level - current_level)*100
         embed = Embed(title=f"Statistics for {user_info.username}")
         embed.add_field(name=f"Ranked score", value=f"{stats.ranked_score:,} {ranked_score}")
         embed.add_field(name=f"Total score", value=f"{stats.total_score:,} {total_score}")
         embed.add_field(name=f"Total hits", value=f"{stats.total_hits:,} {total_hits}")
         embed.add_field(name=f"Play count", value=f"{stats.play_count:,} {play_count}")
-        embed.add_field(name=f"Play time", value=f"{stats.play_time:,} {play_time}")
+        embed.add_field(name=f"Play time", value=f"{stats.play_time/60/60:,.2f}h {play_time}")
         embed.add_field(name=f"Replays watched", value=f"{stats.replays_watched:,} {replays_watched}")
-        embed.add_field(name=f"Level", value=f"{stats.level:.0f} +({int(str(stats.level).split('.')[1])*100:.2f}%) {level}")
+        embed.add_field(name=f"Level", value=f"{current_level} +{level_percentage:.2f}% {level}")
         embed.add_field(name=f"Accuracy", value=f"{stats.accuracy:.2f}% {accuracy}")
-        embed.add_field(name=f"Max combo", value=f"{stats.max_combo:,} {max_combo}")
+        embed.add_field(name=f"Max combo", value=f"{stats.max_combo:,}x {max_combo}")
         embed.add_field(name=f"Global Rank", value=f"#{stats.global_rank:,} {global_rank}")
         embed.add_field(name=f"Country Rank", value=f"#{stats.country_rank:,} {user_info.country} {country_rank}")
         embed.add_field(name=f"Performance Points", value=f"{stats.pp:,}pp {pp}")
@@ -102,7 +110,7 @@ class ShowCommand(Command):
         embed.set_thumbnail(url=server.get_pfp(user_id))
         await message.reply(embed=embed)
     
-    def get_gain(old, new, float_precision=2, reverse=False):
+    def get_gain(self, old, new, float_precision=2, reverse=False):
         if old == new:
             return ""
         if reverse:
