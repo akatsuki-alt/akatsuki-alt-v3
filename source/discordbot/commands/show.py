@@ -6,6 +6,7 @@ from discordbot.bot import Command
 from discord import Message, Embed
 from config import BASE_PATH
 from typing import List
+import shutil
 import time
 import json
 
@@ -123,3 +124,12 @@ class ShowCommand(Command):
             return f"({plus}{res:.{float_precision}f}"
         else:
             return f"({plus}{res:,})"
+        
+class ResetCommand(Command):
+    
+    def __init__(self) -> None:
+        super().__init__("reset", "Reset your temporary statistics", ['reset'])
+    
+    async def run(self, message: Message, arguments: List[str]):
+        shutil.rmtree(f"{BASE_PATH}/cache/{message.author.id}/tracking/",ignore_errors=True)
+        await message.reply(f"Statistics reset.")
