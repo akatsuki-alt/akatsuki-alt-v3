@@ -402,6 +402,13 @@ def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, 
             DBScore.mode == mode, 
             DBScore.relax == relax, 
             DBScore.completed == 3,
+            DBScore.rank == "SSH"
+            ).count() +
+        session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
             DBScore.rank == "SSHD"
             ).count(),
         x_count = session.query(DBScore).filter(
@@ -419,6 +426,13 @@ def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, 
             DBScore.rank == "S"
             ).count(),
         sh_count = session.query(DBScore).filter(
+            DBScore.user_id == user_id, 
+            DBScore.mode == mode, 
+            DBScore.relax == relax, 
+            DBScore.completed == 3,
+            DBScore.rank == "SH"
+            ).count() + 
+        session.query(DBScore).filter(
             DBScore.user_id == user_id, 
             DBScore.mode == mode, 
             DBScore.relax == relax, 
