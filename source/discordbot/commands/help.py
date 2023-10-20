@@ -13,6 +13,7 @@ class Select(discord.ui.Select):
         super().__init__(placeholder="Select an option",max_values=1,min_values=1,options=options)
     
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.callback_function(self.values[0])
     
 class SelectView(discord.ui.View):
