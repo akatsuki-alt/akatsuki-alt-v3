@@ -1,9 +1,10 @@
 from typing import List
 
+from akatsuki_pp_py import Calculator
 from discord import Message, Embed
 from discordbot.bot import Command
 from utils.parser import parse_args
-from utils.beatmaps import load_beatmap
+from utils.beatmaps import load_beatmap, get_calc_beatmap
 import utils.postgres as postgres
 import utils.mods as mods
 from datetime import datetime
@@ -47,9 +48,22 @@ class RecentCommand(Command):
             if (beatmap := load_beatmap(session, recent['beatmap']['beatmap_id'])) is None:
                 await message.reply(f"Error occurred loading beatmap.")
                 return
+        fc_pp = 0
+        max_pp = 0
+        try:
+            calc_map = get_calc_beatmap(beatmap.beatmap_id)
+            calc = Calculator(mods = recent['mods'])
+            max_pp = int(calc.performance(calc_map).pp)
+            calc.set_acc(recent['accuracy'])
+            calc.set_n300(recent['count_300'])
+            calc.set_n100(recent['count_100'])
+            calc.set_n50(recent['count_50'])
+            fc_pp = int(calc.performance(calc_map).pp)
+        except:
+            pass
         lookup = server.lookup_user(user_id)
         embed = Embed(title=f"{beatmap.artist} - {beatmap.title} [{beatmap.version}] +{''.join(mods.get_mods_simple(recent['mods']))}")
-        embed.description = f">>{recent['rank']} {recent['max_combo']}/{beatmap.max_combo}x [{recent['count_300']}/{recent['count_100']}/{recent['count_50']}/{recent['count_miss']}] {recent['accuracy']:.2f}% {recent['pp']}pp"
+        embed.description = f">>{recent['rank']} {recent['max_combo']}/{beatmap.max_combo}x [{recent['count_300']}/{recent['count_100']}/{recent['count_50']}/{recent['count_miss']}] {recent['accuracy']:.2f}% {recent['pp']}pp (FC: {fc_pp}, SS: {max_pp})"
         embed.set_footer(text=f"{lookup[0]} on {server.server_name} at {recent['time']}", icon_url=server.get_pfp(user_id))
         embed.set_thumbnail(url=f"https://assets.ppy.sh/beatmaps/{beatmap.beatmap_id}/covers/cover@2x.jpg")
         await message.reply(embed=embed)
