@@ -1,6 +1,6 @@
 from typing import List
 
-from discord import Message
+from discord import Message, Embed
 from discordbot.bot import Command, commands
 import discord 
 
@@ -23,14 +23,14 @@ class SelectView(discord.ui.View):
     async def callback_function(self, command_name):
         for command in commands:
             if command.name == command_name:
-                await self.message.edit(content=f"{command.name} | {command.description}\n{command.help}")
+                await self.message.edit(embed=Embed(title=f"{command.name}", description=f"{command.description}\n{command.help}"))
                 return
     
     async def reply(self, message: Message):
         content = ""
         for command in commands:
             content += f"{command.name} | {command.description}\n"
-        self.message = await message.reply(content=content, view=self)
+        self.message = await message.reply(embed=Embed(title="Help", description=content), view=self)
     
 class HelpCommand(Command):
     
