@@ -81,6 +81,9 @@ class AkatsukiTracker():
                             score_id = int(score['id'])
                         ))
                     user_info = akat.get_user_info(user_id=user.user_id)
+                    if not user_info:
+                        logger.error(f"Cannot update {user.user_id}! ")
+                        continue
                     update_user(session, user.user_id, user.mode, user.relax, user.date, user_info, add_to_queue=False, fetch_recent=False)
                     session.delete(user)
                     session.commit()
