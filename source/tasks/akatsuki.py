@@ -279,7 +279,7 @@ class AkatsukiTracker():
                         pp=chosen_mode['pp']
                     )
 
-                    session.add(dbuser)
+                    session.merge(dbuser)
 
                 session.commit()
             logger.info(f"Score leaderboard update took {(time.time()-start)/60:.2f} minutes.")
