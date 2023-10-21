@@ -142,7 +142,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             total = len(lost)
             if len(lost) < offset:
                 return {'total': total, 'scores': list()}
-            for first_place in new[offset:offset+length]:
+            for first_place in lost[offset:offset+length]:
                 first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
             return {'total': total, 'scores': lost}
 
