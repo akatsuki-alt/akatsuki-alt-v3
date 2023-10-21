@@ -24,7 +24,7 @@ class SelectView(discord.ui.View):
     async def callback_function(self, command_name):
         for command in commands:
             if command.name == command_name:
-                await self.message.edit(embed=Embed(title=f"{command.name}", description=f"{command.description}\n{command.help}"))
+                await self.message.edit(embed=Embed(title=f"{command.name}", description=f"Aliases: {', '.join(command.triggers)}\n{command.description}\n{command.help}"))
                 return
     
     async def reply(self, message: Message):
