@@ -6,6 +6,9 @@ from fastapi import FastAPI
 import datetime
 import uvicorn
 
+sort_desc = desc
+sort_asc = asc
+
 app = FastAPI()
 
 class TypeEnum(str, Enum):
@@ -160,18 +163,17 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
-async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, sort: str = ScoreSortEnum.date, desc=True, length:int=100,):
+async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
-    order = sort
-    if desc:
-        order += " DESC"
+    direction = sort_desc if desc else sort_asc
     with postgres.instance.managed_session() as session:
         query = session.query(DBScore).filter(DBScore.server == server,
                                                             DBScore.user_id == user_id,
                                                             DBScore.mode == mode,
                                                             DBScore.relax == relax,
-                                                            ).order_by(text(order))
+                                                            DBScore.completed == completed
+                                                            ).order_by(direction(getattr(DBScore, sort)))
         for score in query.offset((page-1)*length).limit(length).all():
             scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
         total = query.count()
