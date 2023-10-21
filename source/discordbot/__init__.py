@@ -6,6 +6,7 @@ from discordbot.commands.ping import PingCommand
 from discordbot.commands.link import LinkCommand
 from discordbot.commands.help import HelpCommand
 from discordbot.commands.leaderboard import ShowLeaderboardCommand
+from discordbot.commands.show1s import Show1sCommand
 
 import discordbot.bot as bot
 
@@ -18,3 +19,4 @@ bot.commands.append(ResetCommand())
 bot.commands.append(HelpCommand())
 bot.commands.append(RecentCommand())
 bot.commands.append(ShowLeaderboardCommand())
+bot.commands.append(Show1sCommand())
