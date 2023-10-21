@@ -24,6 +24,11 @@ class BeatmapMaintainer():
     def main(self):
         while True:    
             with postgres.instance.managed_session() as session:
+                res = session.get(database.DBTaskStatus, "import_beatmaps")
+                if not res:
+                    self.import_beatmaps()
+                    session.merge(database.DBTaskStatus(task_name="import_beatmaps", last_run=time.time()), load=True)
+                    session.commit()
                 res = session.get(database.DBTaskStatus, "bancho_beatmaps")
                 if not res or (time.time()-res.last_run)/60/60>1:
                     self.update_bancho_maps()
@@ -152,3 +157,48 @@ class BeatmapMaintainer():
                 session.merge(beatmaps.beatmap_to_db(beatmap), load=True)
                 session.commit()
                 session.flush()
+
+    def import_beatmaps(self):
+        logger.info(f"Importing beatmaps...")
+        imported = 0
+        with postgres.instance.managed_session() as session:
+            with open('/app/beatmaps.csv') as f:
+                for line in f.readlines():
+                    csv = line.split('\t')
+                    if session.get(database.DBBeatmap, (int(csv[0]))):
+                        continue
+                    try:
+                        session.merge(database.DBBeatmap(
+                        beatmap_id = int(csv[0]),
+                        beatmap_set_id = int(csv[1]),
+                        beatmap_md5 = csv[2],
+                        artist = csv[3],
+                        title = csv[4],
+                        version = csv[5],
+                        mapper = csv[6],
+                        ranked_status = {'bancho': int(csv[7]), 'akatsuki': int(csv[8])},
+                        ar = float(csv[9]),
+                        od = float(csv[10]),
+                        cs = float(csv[11]),
+                        length = int(csv[12].split('.')[0]),
+                        bpm = float(csv[13]),
+                        max_combo = int(csv[14]),
+                        circles = int(csv[15]),
+                        sliders = int(csv[16]),
+                        spinners = int(csv[17]),
+                        mode = int(csv[18]),
+                        tags = csv[19],
+                        packs = csv[20],
+                        stars_nm = float(csv[21]),
+                        stars_ez = float(csv[22]),
+                        stars_hr = float(csv[23]),
+                        stars_dt = float(csv[24]),
+                        stars_dtez = float(csv[25]),
+                        stars_dthr = float(csv[26]),
+                        approved_date = int(csv[27].strip())
+                    ))
+                        imported += 1
+                    except:
+                        pass
+            session.commit()
+        logger.info(f"Imported {imported} maps.")
