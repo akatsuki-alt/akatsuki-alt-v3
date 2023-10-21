@@ -1,11 +1,13 @@
+from sqlalchemy.orm.attributes import flag_modified
 from ossapi import BeatmapsetSearchCategory
 from utils.logger import get_logger
+from sqlalchemy import or_, Integer
+
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.bancho as bancho
 import utils.beatmaps as beatmaps
 import utils.selfbot as selfbot
-from sqlalchemy import or_, Integer
 
 from datetime import datetime, timedelta
 from typing import *
@@ -102,7 +104,10 @@ class BeatmapMaintainer():
                     beatmap = bancho.client.beatmap(beatmap_id=id)
                     time.sleep(0.5)
                 except:
-                    logger.info(f"can't update {id}, not found.")
+                    if (beatmap := beatmaps.load_beatmap(session, id)) is not None:
+                        beatmap.ranked_status['akatsuki'] = -2
+                        flag_modified(beatmap, 'ranked_status')
+                        session.commit()
                     continue
                 session.merge(beatmaps.beatmap_to_db(beatmap), load=True)
                 session.commit()
