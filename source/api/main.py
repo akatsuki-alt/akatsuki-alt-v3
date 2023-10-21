@@ -19,6 +19,17 @@ class FirstPlacesEnum(str, Enum):
     new = "new"
     lost = "lost"
 
+class ScoreSortEnum(str, Enum):
+    beatmap_id = "beatmap_id"
+    score_id = "score_id"
+    accuracy = "accuracy"
+    mods = "mods"
+    pp = "pp"
+    score = "score"
+    combo = "combo"
+    rank = "rank"
+    date = "date"
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -149,21 +160,21 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
-async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, length:int=100,):
+async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, sort: ScoreSortEnum = "date", desc=True, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
+    order = sort
+    if desc:
+        order += " DESC"
     with postgres.instance.managed_session() as session:
-        for score in session.query(DBScore).filter(DBScore.server == server,
+        query = session.query(DBScore).filter(DBScore.server == server,
                                                             DBScore.user_id == user_id,
                                                             DBScore.mode == mode,
                                                             DBScore.relax == relax,
-                                                            ).offset((page-1)*length).limit(length).all():
+                                                            ).order_by(text(order))
+        for score in query.offset((page-1)*length).limit(length).all():
             scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
-        total = session.query(DBScore).filter(DBScore.server == server,
-                                                            DBScore.user_id == user_id,
-                                                            DBScore.mode == mode,
-                                                            DBScore.relax == relax,
-                                                            ).count()
+        total = query.count()
         return {'total': total, 'scores': scores}
 
 
