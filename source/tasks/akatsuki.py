@@ -52,11 +52,11 @@ class AkatsukiTracker():
                         most_played = akat.get_user_most_played(user.user_id, user.mode, user.relax, pages=10000)
                         if (playtime := session.get(DBAKatsukiPlaytime, (user.user_id, user.mode, user.relax))) is None:
                             playtime = DBAKatsukiPlaytime(user_id = user.user_id, mode = user.mode, relax = user.relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
-                        for map in most_played:
-                            if (beatmap := beatmaps.load_beatmap(session, map['beatmap']['beatmap_id'])) is not None:
-                                playtime.most_played += ((beatmap.length/beatmap.max_combo)*30) * map['playcount']
+                        for played_map in most_played:
+                            if (beatmap := beatmaps.load_beatmap(session, played_map['beatmap']['beatmap_id'])) is not None:
+                                playtime.most_played += ((beatmap.length/beatmap.max_combo)*30) * played_map['playcount']
                         for score in scores:
-                            if (beatmap := beatmaps.load_beatmap(session, map['beatmap']['beatmap_id'])) is not None:
+                            if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
                                 divisor = 1.5 if score['mods'] & 64 else 1
                                 playtime.submitted_plays += (beatmap.length)/divisor
                             session.merge(score_to_db(score, user_id=user.user_id, mode=user.mode, relax=user.relax))
@@ -95,8 +95,19 @@ class AkatsukiTracker():
         logger.info("Tracking leaderboard started.")
         modes = ((0,0),(0,1),(0,2),(1,0),(1,1),(2,0),(2,1),(3,0))
         
+        
         with postgres.instance.managed_session() as session:
 
+            for link in session.query(DBDiscordLink).all():
+                if link.default_server != "akatsuki":
+                    continue
+                session.merge(DBUserQueue(
+                    server = "akatsuki",
+                    user_id = link.servers[link.default_server],
+                    mode = link.default_mode,
+                    relax = link.default_relax,
+                    date = date.today()
+                ))
             old_users = session.query(DBLiveUser).filter(DBLiveUser.server == "akatsuki").all()
             to_update: List[DBLiveUser] = list()
             
