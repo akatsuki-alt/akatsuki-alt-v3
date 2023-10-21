@@ -122,9 +122,10 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             total = len(new)
             if len(new) < offset:
                 return {'total': total, 'scores': list()}
+            first_places = list()
             for first_place in new[offset:offset+length]:
                 first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
-            return {'total': total, 'scores': new}
+            return {'total': total, 'scores': first_places}
         elif type == "lost":
             lost = list()
             for first_place in session.query(DBUserFirstPlace).filter(DBUserFirstPlace.server == server,
@@ -142,9 +143,10 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             total = len(lost)
             if len(lost) < offset:
                 return {'total': total, 'scores': list()}
+            first_places = list()
             for first_place in lost[offset:offset+length]:
                 first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
-            return {'total': total, 'scores': lost}
+            return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
 async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, length:int=100,):
