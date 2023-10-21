@@ -69,6 +69,7 @@ class ShowLeaderboardCommand(Command):
         if (link := self.get_link(message)) is None:
             await message.reply(f"You don't have an account linked!")
             return
+        modes = {'std': (0,0), 'std_rx': (0,1), 'std_ap': (0,2), 'taiko': (1,0), 'taiko_rx': (1,1), 'ctb': (2,0), 'ctb_rx': (2,1), 'mania': (3,0)}
         mode = link.default_mode
         relax = link.default_relax
         server = link.default_server
@@ -84,4 +85,9 @@ class ShowLeaderboardCommand(Command):
                 await message.reply(f"Invalid type! valid types: {', '.join(values)}")
                 return
             type = parsed['type']
+        if parsed['unparsed']:
+            if parsed['unparsed'][0] not in modes:
+                await message.reply(f"Invalid mode! Valid modes: {','.join(modes.keys())}")
+                return
+            mode, relax = modes[parsed['unparsed'][0]]
         await LeaderboardView({'mode': mode, 'relax': relax, 'server': server, 'type': type}).reply(message)
