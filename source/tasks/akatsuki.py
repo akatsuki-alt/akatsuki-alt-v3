@@ -375,6 +375,20 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
                         score['count_miss']
                     )) / divisor
             session.merge(score_to_db(score, user_id, mode, relax), load=True)
+        scores = {}
+        for score in session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.completed == 3, DBScore.user_id == user_id).all():
+            score: DBScore = score
+            mode_str = f'{score.mode}+{score.relax}'
+            if score.beatmap_id in scores:
+                if mode_str in scores[score.beatmap_id]:
+                    if score.date > scores[score.beatmap_id][mode_str].date:
+                        scores[score.beatmap_id][mode_str].completed = 2
+                        scores[score.beatmap_id][mode_str] = score
+                    else:
+                        scores[score.beatmap_id][mode_str] = score
+                else:
+                    scores[score.beatmap_id] = {mode_str: score}
+        session.commit()
     session.merge(playtime, load=True)
 
 def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, date: date, first_places_count: int, user_info: akat.User):
