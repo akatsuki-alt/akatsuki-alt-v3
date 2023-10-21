@@ -324,7 +324,9 @@ class AkatsukiTracker():
 
 def update_user(session, user_id: int, mode: int, relax: int, date: date, user_info: akat.User, add_to_queue=True, fetch_recent=True):
     stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == mode, DBStats.relax == relax, DBStats.date == date).first()
+    queue = True
     if stats:
+        queue = False
         session.delete(stats)
     first_places_count = akat.get_user_first_places(user_id=user_id, mode=mode, relax=relax)[0]
     stats = stats_to_db(session, user_id, mode, relax, date, first_places_count, user_info)
@@ -333,6 +335,14 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
         stats.country_score_rank = score_user.country_rank
     session.merge(stats)
     if add_to_queue:
+        if queue:
+            session.merge(DBUserQueue(
+                server = "akatsuki",
+                user_id = user_id,
+                mode = mode,
+                relax = relax,
+                date = (date - datetime.timedelta(days=1)),
+            ))
         session.merge(DBUserQueue(
             server = "akatsuki",
             user_id = user_id,
