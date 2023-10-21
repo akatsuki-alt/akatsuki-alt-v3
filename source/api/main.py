@@ -160,7 +160,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
-async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, sort: ScoreSortEnum = "date", desc=True, length:int=100,):
+async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, sort: str = ScoreSortEnum.date, desc=True, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
     order = sort
