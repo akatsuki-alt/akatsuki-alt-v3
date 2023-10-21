@@ -25,8 +25,8 @@ class Akatsuki(Server):
         super().__init__('akatsuki', 'https://akatsuki.gg', supports_rx=True, supports_ap=True, notes="Full support")
 
     def lookup_user(self, user: str | int) -> Tuple[str, int] | None:
-        if type(user) == int:
-            user_info = akatsuki.get_user_info(user)
+        if type(user) == int or user.isnumeric():
+            user_info = akatsuki.get_user_info(int(user))
             if not user_info:
                 return None
             return user_info['username'], user_info['id']
