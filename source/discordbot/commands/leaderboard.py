@@ -15,14 +15,16 @@ class LeaderboardView(View):
         super().__init__()
     
     @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self,button:discord.ui.Button,interaction:discord.Interaction):    
+    async def prev_button(self, interaction:discord.Interaction, button:discord.ui.Button):    
         self.page = max(self.page-1, 1)
-        await interaction.message.edit(embed=self.get_embed())
+        await interaction.response.defer()
+        await interaction.followup.edit_message(message_id=interaction.message.id, embed=self.get_embed(), view=self)
 
     @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self,button:discord.ui.Button,interaction:discord.Interaction):    
+    async def next_button(self, interaction:discord.Interaction, button:discord.ui.Button):    
         self.page += 1
-        await interaction.message.edit(embed=self.get_embed())
+        await interaction.response.defer()
+        await interaction.followup.edit_message(message_id=interaction.message.id, embed=self.get_embed(), view=self)
         
     def get_embed(self):
         embed = Embed(title="Leaderboards")
@@ -38,7 +40,7 @@ class LeaderboardView(View):
             embed.description = "Empty :/"
             return embed
         content = "```"
-        rank = 1*(self.page-1)
+        rank = 10*(self.page-1)
         entry = "first_places"
         for enum in UserExtraLeaderboardTypeEnum:
             if enum.value == self.api_options['type']:
