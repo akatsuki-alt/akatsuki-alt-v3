@@ -228,5 +228,17 @@ async def get_sets():
         server_list[server.server_name] = server.beatmap_sets
     return server_list
 
+@app.get("/beatmaps/list")
+async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100):
+    beatmaps = list()
+    with postgres.instance.managed_session() as session:
+        query = session.query(DBBeatmap).filter(
+            DBBeatmap.mode == mode,
+            DBBeatmap.ranked_status[set_name].astext.cast(Integer) == ranked_status
+        )
+        for beatmap in query.offset((page-1)*length).limit(length):
+            beatmaps.append(beatmap)
+    return beatmaps
+
 def main():
     uvicorn.run(app, host="0.0.0.0", port=4269)
