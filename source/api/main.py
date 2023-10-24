@@ -1,4 +1,5 @@
 
+from utils.api.servers import servers
 import utils.postgres as postgres
 from utils.database import *
 
@@ -204,7 +205,7 @@ async def get_user_info(user_id:int, server="akatsuki"):
 @app.get("/clan/info")
 async def get_clan_info(clan_id:int, server="akatsuki"):
     with postgres.instance.managed_session() as session:
-        return session.get(DBClan, (server, clan_id))
+        return session.gebeatmap_setst(DBClan, (server, clan_id))
 
 @app.get("/clan/members")
 async def get_clan_members(clan_id:int, server="akatsuki"):
@@ -219,6 +220,13 @@ async def get_clan_stats(clan_id:int, server="akatsuki", mode:int=0, relax:int=0
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     with postgres.instance.managed_session() as session:
         return session.get(DBClanStats, (server, clan_id, mode, relax, date))
-    
+
+@app.get("/beatmaps/server_sets")
+async def get_sets():
+    server_list = {}
+    for server in servers:
+        server_list[server.server_name] = server.beatmap_sets
+    return server_list
+
 def main():
     uvicorn.run(app, host="0.0.0.0", port=4269)
