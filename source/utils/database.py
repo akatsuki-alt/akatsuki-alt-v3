@@ -99,11 +99,12 @@ class DBBeatmap(Base):
     stars_dtez = Column('stars_dtez', Float)
     stars_dthr = Column('stars_dthr', Float)
     approved_date = Column('approved_date', Integer)
+    scores = relationship('DBScore', back_populates='beatmap', lazy='selectin', join_depth=1)
 
 class DBScore(Base):
     __tablename__ = "user_scores"
     
-    beatmap_id = Column('beatmap_id', Integer, primary_key=True)
+    beatmap_id = Column('beatmap_id', Integer, ForeignKey('beatmaps.beatmap_id'))
     server = Column('server', String, primary_key=True)
     user_id = Column('user_id', Integer, primary_key=True)
     mode = Column('mode', SmallInteger, primary_key=True)
@@ -121,6 +122,8 @@ class DBScore(Base):
     count_miss = Column('count_miss', SmallInteger)
     completed = Column('completed', SmallInteger)
     date = Column('date', Integer)
+
+    beatmap = relationship('DBBeatmap', back_populates='scores', lazy='selectin', join_depth=1)
 
 # Workaround for akatsuki broken rx playtime since 1984...
 class DBAKatsukiPlaytime(Base):
