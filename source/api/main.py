@@ -1,5 +1,6 @@
 
 from utils.api.servers import servers
+from api.filter import build_query
 import utils.postgres as postgres
 from utils.database import *
 
@@ -164,7 +165,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
-async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
+async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
     direction = sort_desc if desc else sort_asc
@@ -175,6 +176,10 @@ async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=
                                                             DBScore.relax == relax,
                                                             DBScore.completed == completed
                                                             ).order_by(direction(getattr(DBScore, sort)))
+        if score_filter:
+            query = build_query(query, DBScore, score_filter.split(","))
+        if beatmap_filter:
+            query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
         for score in query.offset((page-1)*length).limit(length).all():
             scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
         total = query.count()
