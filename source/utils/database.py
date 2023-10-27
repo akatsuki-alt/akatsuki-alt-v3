@@ -109,7 +109,7 @@ class DBScore(Base):
     user_id = Column('user_id', Integer, primary_key=True)
     mode = Column('mode', SmallInteger, primary_key=True)
     relax = Column('relax', SmallInteger, primary_key=True)
-    score_id = Column('score_id', BigInteger, primary_key=True)
+    score_id = Column('score_id', BigInteger, primary_key=True, unique=True)
     accuracy = Column('accuracy', Float)
     mods = Column('mods', Integer)
     pp = Column('pp', Float)
@@ -204,7 +204,9 @@ class DBUserFirstPlace(Base):
     mode = Column("mode", SmallInteger, primary_key=True)
     relax = Column("relax", SmallInteger, primary_key=True)
     date = Column('date', Date, primary_key=True)
-    score_id = Column('score_id', BigInteger, primary_key=True)
+    score_id = Column('score_id', BigInteger, ForeignKey('user_scores.score_id'), primary_key=True)
+
+    score = relationship('DBScore', backref='user_first_places')
 
 class DBClanStats(Base):
     __tablename__ = "clan_leaderboard"
