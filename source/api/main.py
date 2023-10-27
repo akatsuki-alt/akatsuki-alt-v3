@@ -110,7 +110,7 @@ async def get_user(user_id:int, server="akatsuki", mode:int=0, relax:int=0,date=
         return session.get(DBStats, (user_id, server, mode, relax, date))
 
 @app.get("/user/first_places")
-async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), page:int=1, length:int=100,):
+async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     first_places = list()
     yesterday = (date - datetime.timedelta(days=1))
@@ -121,9 +121,13 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                                                             DBUserFirstPlace.relax == relax,
                                                             DBUserFirstPlace.date == date,
                                                             )
+        if score_filter:
+            query = build_query(query.join(DBScore), DBScore, score_filter.split(","))
+        if beatmap_filter:
+            query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
         if type == "all":
             for first_place in query.offset((page-1)*length).limit(length).all():
-                first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
+                first_places.append(first_place.score)  
             total = query.count()
             return {'total': total, 'scores': first_places}
         elif type == "new":
@@ -140,7 +144,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                 return {'total': total, 'scores': list()}
             first_places = list()
             for first_place in new[offset:offset+length]:
-                first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
+                first_places.append(first_place.score)  
             return {'total': total, 'scores': first_places}
         elif type == "lost":
             lost = list()
@@ -161,7 +165,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                 return {'total': total, 'scores': list()}
             first_places = list()
             for first_place in lost[offset:offset+length]:
-                first_places.append(session.query(DBScore).filter(DBScore.score_id == first_place.score_id).first())  
+                first_places.append(first_place.score)  
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/clears")
