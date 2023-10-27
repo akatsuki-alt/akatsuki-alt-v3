@@ -73,14 +73,14 @@ class AkatsukiTracker():
                         if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == int(score['id'])).first():
                             if beatmaps.load_beatmap(session, score['beatmap']['beatmap_id']):
                                 session.add(score_to_db(score, user.user_id, user.mode, user.relax))
-                        session.merge(DBUserFirstPlace(
-                            server = "akatsuki",
-                            user_id = user.user_id,
-                            mode = user.mode,
-                            relax = user.relax,
-                            date = user.date,
-                            score_id = int(score['id'])
-                        ))
+                                session.merge(DBUserFirstPlace(
+                                    server = "akatsuki",
+                                    user_id = user.user_id,
+                                    mode = user.mode,
+                                    relax = user.relax,
+                                    date = user.date,
+                                    score_id = int(score['id'])
+                                ))
                     user_info = akat.get_user_info(user_id=user.user_id)
                     if not user_info:
                         logger.error(f"Cannot update {user.user_id}! ")
