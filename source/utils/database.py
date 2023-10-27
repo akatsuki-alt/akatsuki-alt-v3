@@ -99,7 +99,6 @@ class DBBeatmap(Base):
     stars_dtez = Column('stars_dtez', Float)
     stars_dthr = Column('stars_dthr', Float)
     approved_date = Column('approved_date', Integer)
-    scores = relationship('DBScore', back_populates='beatmap', lazy='selectin', join_depth=1)
 
 class DBScore(Base):
     __tablename__ = "user_scores"
@@ -123,7 +122,7 @@ class DBScore(Base):
     completed = Column('completed', SmallInteger)
     date = Column('date', Integer)
 
-    beatmap = relationship('DBBeatmap', back_populates='scores', lazy='selectin', join_depth=1)
+    beatmap = relationship('DBBeatmap', backref='user_scores', lazy='selectin', join_depth=2)
 
 # Workaround for akatsuki broken rx playtime since 1984...
 class DBAKatsukiPlaytime(Base):
@@ -206,7 +205,7 @@ class DBUserFirstPlace(Base):
     date = Column('date', Date, primary_key=True)
     score_id = Column('score_id', BigInteger, ForeignKey('user_scores.score_id'), primary_key=True)
 
-    score = relationship('DBScore', backref='user_first_places')
+    score = relationship('DBScore', backref='user_first_places', join_depth=2)
 
 class DBClanStats(Base):
     __tablename__ = "clan_leaderboard"
