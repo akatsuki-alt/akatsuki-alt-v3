@@ -64,7 +64,9 @@ class ClearsView(discord.ui.View):
             sort=self.types[self.type],
             page=self.page,
             length=10,
-            desc=self.desc
+            desc=self.desc,
+            score_filter=self.api_options['score_filter'],
+            beatmap_filter=self.api_options['beatmap_filter'],
         )
         content = '```'
         if not scores or not scores[1]:
@@ -104,6 +106,8 @@ class ShowClearsCommand(Command):
         mode = link.default_mode
         relax = link.default_relax
         server = link.default_server
+        score_filter = ''
+        beatmap_filter = ''
         if parsed['unparsed']:
             if parsed['unparsed'][0] not in modes:
                 await message.reply(f"Invalid mode! Valid modes: {','.join(modes.keys())}")
@@ -120,4 +124,8 @@ class ShowClearsCommand(Command):
                 await message.reply(f"User not found!")
                 return
             user_id = lookup[1]
-        await ClearsView({'user_id': user_id, 'server': server, 'mode': mode, 'relax': relax}).reply(message)
+        if 'score_filter' in parsed:
+            score_filter = parsed['score_filter']
+        if 'beatmap_filter' in parsed:
+            beatmap_filter = parsed['beatmap_filter']
+        await ClearsView({'user_id': user_id, 'server': server, 'mode': mode, 'relax': relax, 'score_filter': score_filter, 'beatmap_filter': beatmap_filter}).reply(message)

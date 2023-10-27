@@ -47,6 +47,8 @@ class FirstPlacesView(discord.ui.View):
                 mode = self.api_options['mode'],
                 relax = self.api_options['relax'],
                 type = self.types[self.type],
+                score_filter=self.api_options['score_filter'],
+                beatmap_filter=self.api_options['beatmap_filter'],
                 page = self.page,
                 length = 10
             )
@@ -85,6 +87,8 @@ class Show1sCommand(Command):
         mode = link.default_mode
         relax = link.default_relax
         server = link.default_server
+        score_filter = ''
+        beatmap_filter = ''
         if 'server' in parsed:
             if (server := self.get_server(parsed['server'])) is None:
                 await message.reply("Unknown server!")
@@ -102,8 +106,14 @@ class Show1sCommand(Command):
                 await message.reply(f"User not found!")
                 return
             user_id = lookup[1]
+        if 'score_filter' in parsed:
+            score_filter = parsed['score_filter']
+        if 'beatmap_filter' in parsed:
+            beatmap_filter = parsed['beatmap_filter']
         await FirstPlacesView({'user_id': user_id, 
                                'server': server,
                                'mode': mode,
-                               'relax': relax
+                               'relax': relax,
+                               'score_filter': score_filter,
+                               'beatmap_filter': beatmap_filter
                             }).reply(message)
