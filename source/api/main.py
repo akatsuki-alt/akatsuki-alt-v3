@@ -110,7 +110,7 @@ async def get_user(user_id:int, server="akatsuki", mode:int=0, relax:int=0,date=
         return session.get(DBStats, (user_id, server, mode, relax, date))
 
 @app.get("/user/first_places")
-async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
+async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     first_places = list()
     yesterday = (date - datetime.timedelta(days=1))
