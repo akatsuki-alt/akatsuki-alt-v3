@@ -8,35 +8,64 @@ from utils.beatmaps import load_beatmap
 import utils.postgres as postgres
 import discord
 from utils.mods import get_mods_simple
+from utils.api.akatsukialt.akataltapi import ScoreSortEnum
 
 class FirstPlacesView(discord.ui.View):
     
     def __init__(self, api_options):
         self.types = ['all', 'new', 'lost']
+        self.types_sort = [e.value for e in ScoreSortEnum]
         self.type = 0
+        self.type_sort = 0
+        self.desc = True
         self.api_options = api_options
         self.page = 1
         super().__init__()
 
     @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
     async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
         self.page = max(self.page-1, 1)
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        await interaction.message.edit(embed=self.get_embed(), view=self)
 
     @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
     async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
         self.page += 1
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        await interaction.message.edit(embed=self.get_embed(), view=self)
  
     @discord.ui.button(label="Type: all",style=discord.ButtonStyle.gray)
     async def toggle_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
         self.type += 1
         if self.type == len(self.types):
             self.type = 0
         self.page = 1
         button.label = f"Type: {self.types[self.type]}"
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Sort: pp",style=discord.ButtonStyle.gray)
+    async def toggle_sort_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
+        self.type_sort += 1
+        if self.type_sort == len(self.types_sort):
+            self.type_sort = 0
+        self.page = 1
+        button.label = f"Sort: {self.types_sort[self.type_sort]}"
+        await interaction.message.edit(embed=self.get_embed(), view=self)
     
+    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
+    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+        await interaction.response.defer()   
+        if self.desc:
+            self.desc = False
+            button.label = "Order: ↑"
+        else:
+            self.desc = True
+            button.label = "Order: ↓"
+        self.page = 1
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+   
     def get_embed(self):
         embed = discord.Embed(title=f"First places")
         content = '```'
@@ -47,6 +76,8 @@ class FirstPlacesView(discord.ui.View):
                 mode = self.api_options['mode'],
                 relax = self.api_options['relax'],
                 type = self.types[self.type],
+                sort=self.types_sort[self.type_sort],
+                desc=self.desc,
                 score_filter=self.api_options['score_filter'],
                 beatmap_filter=self.api_options['beatmap_filter'],
                 page = self.page,
