@@ -5,7 +5,7 @@ def parse_args(args: List[str], unparsed=False):
     if unparsed:
         parsed_args['unparsed'] = []
     for arg in args:
-        arg = arg.split("=")
+        arg = arg.split("=", maxsplit=1)
         if len(arg) != 2:
             if unparsed:
                 parsed_args['unparsed'].append(arg[0])
