@@ -190,6 +190,26 @@ async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=
         total = query.count()
         return {'total': total, 'scores': scores}
 
+@app.get("/user/clears/all")
+async def get_all_clears( server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+    scores = list()
+    direction = sort_desc if desc else sort_asc
+    with postgres.instance.managed_session() as session:
+        query = session.query(DBScore).filter(DBScore.server == server,
+                                                            DBScore.mode == mode,
+                                                            DBScore.relax == relax,
+                                                            DBScore.completed == completed
+                                                            ).order_by(direction(getattr(DBScore, sort)))
+        if score_filter:
+            query = build_query(query, DBScore, score_filter.split(","))
+        if beatmap_filter:
+            query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
+        for score in query.offset((page-1)*length).limit(length).all():
+            scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
+        total = query.count()
+        return {'total': total, 'scores': scores}
+
 
 @app.get("/user/rank")
 async def get_user_leaderboard(user_id: int, server="akatsuki", date=str(datetime.datetime.now().date()), mode:int=0, relax:int=0, type: str = TypeEnum.pp):
