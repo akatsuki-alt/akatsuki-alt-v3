@@ -110,17 +110,18 @@ async def get_user(user_id:int, server="akatsuki", mode:int=0, relax:int=0,date=
         return session.get(DBStats, (user_id, server, mode, relax, date))
 
 @app.get("/user/first_places")
-async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
+async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     first_places = list()
     yesterday = (date - datetime.timedelta(days=1))
+    direction = sort_desc if desc else sort_asc
     with postgres.instance.managed_session() as session:
         query = session.query(DBUserFirstPlace).filter(DBUserFirstPlace.server == server,
                                                             DBUserFirstPlace.user_id == user_id,
                                                             DBUserFirstPlace.mode == mode,
                                                             DBUserFirstPlace.relax == relax,
                                                             DBUserFirstPlace.date == date,
-                                                            )
+                                                            ).join(DBScore).order_by(direction(getattr(DBScore, sort)))
         if score_filter:
             query = build_query(query.join(DBScore), DBScore, score_filter.split(","))
         if beatmap_filter:
