@@ -46,6 +46,15 @@ class AkatsukiTracker():
                 queue = session.query(DBUserQueue).filter(datetime.datetime.now().date() > DBUserQueue.date).all()
                 for user in queue:
                     logger.info(f"Processing user in queue: {user.user_id}")
+                    user_info = akat.get_user_info(user_id=user.user_id)
+                    if not user_info:
+                        logger.error(f"Cannot update {user.user_id}! Investigating...")
+                        if akat.ping_server():
+                            logger.info(f"User {user.user_id} is banned.")
+                            self.ban_user(session, user.user_id)
+                            session.delete(user)
+                            session.commit()
+                        continue
                     if not session.query(DBUserInfo).filter(DBUserInfo.server == "akatsuki", DBUserInfo.user_id == user.user_id, DBUserInfo.mode == user.mode, DBUserInfo.relax == user.relax).first():
                         logger.info(f"Fetching {user.user_id} plays")
                         scores = akat.get_user_best(user.user_id, user.mode, user.relax, pages=100000)
@@ -82,10 +91,6 @@ class AkatsukiTracker():
                             date = user.date,
                             score_id = int(score['id'])
                         ))
-                    user_info = akat.get_user_info(user_id=user.user_id)
-                    if not user_info:
-                        logger.error(f"Cannot update {user.user_id}! ")
-                        continue
                     update_user(session, user.user_id, user.mode, user.relax, user.date, user_info, add_to_queue=False, fetch_recent=False)
                     session.delete(user)
                     session.commit()
@@ -172,7 +177,6 @@ class AkatsukiTracker():
             if user.user_id not in by_id:
                 by_id[user.user_id] = []
             by_id[user.user_id].append(user)
-        
         with postgres.instance.managed_session() as session:
             date = datetime.datetime.now().date()
             yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).date()
@@ -335,6 +339,43 @@ class AkatsukiTracker():
                 session.commit()
         logger.info(f"clan leaderboard update took {(time.time()-start)/60:.2f} minutes.")
 
+    def ban_user(self, session: postgres.Session, user_id: int):
+        for link in session.query(DBDiscordLink).all():
+            if 'akatsuki' in link.servers:
+                if link.servers['akatsuki'] == user_id:
+                    return # Ignore linked users, mostly autoban
+        logger.info(f"Wiping {user_id}")
+        for first_place in session.query(DBUserFirstPlace).filter(
+                DBUserFirstPlace.server == "akatsuki",
+                DBUserFirstPlace.user_id == user_id
+        ).all():
+            session.delete(first_place)
+        for info in session.query(DBUserInfo).filter(
+                DBUserInfo.server == "akatsuki",
+                DBUserInfo.user_id == user_id
+        ).all():
+            session.delete(info)
+        for playtime in session.query(DBAKatsukiPlaytime).filter(
+                DBAKatsukiPlaytime.user_id == user_id
+        ).all():
+            session.delete(playtime)
+        for stats in session.query(DBStats).filter(
+                DBStats.server == "akatsuki",
+                DBStats.user_id == user_id
+        ).all():
+            session.delete(stats)
+        for user in session.query(DBUser).filter(
+                DBUser.server == "akatsuki",
+                DBUser.user_id == user_id
+        ).all():
+            session.delete(user)
+        for score in session.query(DBScore).filter(
+                DBScore.server == "akatsuki",
+                DBScore.user_id == user_id
+        ).all():
+            session.delete(score)
+        session.commit()
+
 def update_user(session, user_id: int, mode: int, relax: int, date: date, user_info: akat.User, add_to_queue=True, fetch_recent=True):
     stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == mode, DBStats.relax == relax, DBStats.date == date).first()
     queue = True
@@ -403,6 +444,7 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
                     scores[score.beatmap_id] = {mode_str: score}
         session.commit()
     session.merge(playtime, load=True)
+
 
 def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, date: date, first_places_count: int, user_info: akat.User):
     modes = ['std', 'taiko', 'ctb', 'mania']
