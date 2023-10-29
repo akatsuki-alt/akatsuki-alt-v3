@@ -104,6 +104,90 @@ class FirstPlacesView(discord.ui.View):
     async def reply(self, message: Message):
         await message.reply(embed=self.get_embed(), view=self)
 
+class AllFirstPlacesView(discord.ui.View):
+    
+    def __init__(self, api_options):
+        self.types_sort = [e.value for e in ScoreSortEnum]
+        self.type_sort = 4
+        self.desc = True
+        self.api_options = api_options
+        self.page = 1
+        super().__init__()
+
+    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
+    async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
+        self.page = max(self.page-1, 1)
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
+    async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
+        self.page += 1
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+ 
+    @discord.ui.button(label="Sort: pp",style=discord.ButtonStyle.gray)
+    async def toggle_sort_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+        await interaction.response.defer()   
+        self.type_sort += 1
+        if self.type_sort == len(self.types_sort):
+            self.type_sort = 0
+        self.page = 1
+        button.label = f"Sort: {self.types_sort[self.type_sort]}"
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+    
+    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
+    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+        await interaction.response.defer()   
+        if self.desc:
+            self.desc = False
+            button.label = "Order: ↑"
+        else:
+            self.desc = True
+            button.label = "Order: ↓"
+        self.page = 1
+        await interaction.message.edit(embed=self.get_embed(), view=self)
+   
+    def get_embed(self):
+        embed = discord.Embed(title=f"First places")
+        content = '```'
+        with postgres.instance.managed_session() as session:
+            first_places = instance.get_all_1s(
+                server = self.api_options['server'],
+                mode = self.api_options['mode'],
+                relax = self.api_options['relax'],
+                sort=self.types_sort[self.type_sort],
+                desc=self.desc,
+                score_filter=self.api_options['score_filter'],
+                beatmap_filter=self.api_options['beatmap_filter'],
+                page = self.page,
+                length = 10
+            )
+            if not first_places or not first_places[1]:
+                content += "No scores :/```"
+                embed.description = content
+                return embed
+            embed.title += f" ({first_places[0]})"
+            for score in first_places[1]:
+                if (beatmap := load_beatmap(session, score.beatmap_id)) is not None:
+                    username = "Unknown Player:"
+                    if (user := instance.get_user_info(server=self.api_options['server'], user_id=score.user_id)):
+                        username = user.username
+                    title = f"{username}: {beatmap.title} [{beatmap.version}]"
+                    max_combo = beatmap.max_combo
+                else:
+                    title = "API error :("
+                    max_combo = 42069
+                content += f"{title} +{''.join(get_mods_simple(score.mods))}\n"
+                content += f"{score.rank} {score.combo}/{max_combo}x [{score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss}] {score.accuracy:.2f}% {score.score:,} {score.pp}pp\n"
+        content += '```'
+        embed.description = content
+        return embed
+
+    async def reply(self, message: Message):
+        await message.reply(embed=self.get_embed(), view=self)
+
+
 class Show1sCommand(Command):
     
     def __init__(self) -> None:
@@ -148,3 +232,42 @@ class Show1sCommand(Command):
                                'score_filter': score_filter,
                                'beatmap_filter': beatmap_filter
                             }).reply(message)
+
+class ShowServer1sCommand(Command):
+    
+    def __init__(self) -> None:
+        super().__init__("showserver1s", "shows every first places", ['showserver1s', 'server1s'])
+    
+    async def run(self, message: Message, arguments: List[str]):
+        if (link := self.get_link(message)) is None:
+            await message.reply(f"You don't have an account linked1")
+            return
+        parsed = parse_args(arguments, unparsed=True)
+        mode = link.default_mode
+        relax = link.default_relax
+        server = link.default_server
+        score_filter = ''
+        beatmap_filter = ''
+        if 'server' in parsed:
+            if (server := self.get_server(parsed['server'])) is None:
+                await message.reply("Unknown server!")
+                return
+            server = server.server_name
+        modes = {'std': (0,0), 'std_rx': (0,1), 'std_ap': (0,2), 'taiko': (1,0), 'taiko_rx': (1,1), 'ctb': (2,0), 'ctb_rx': (2,1), 'mania': (3,0)}
+        if parsed['unparsed']:
+            if parsed['unparsed'][0] not in modes:
+                await message.reply(f"Invalid mode! Valid modes: {','.join(modes.keys())}")
+                return
+            mode, relax = modes[parsed['unparsed'][0]]
+        if 'score_filter' in parsed:
+            score_filter = parsed['score_filter']
+        if 'beatmap_filter' in parsed:
+            beatmap_filter = parsed['beatmap_filter']
+        await AllFirstPlacesView({
+                               'server': server,
+                               'mode': mode,
+                               'relax': relax,
+                               'score_filter': score_filter,
+                               'beatmap_filter': beatmap_filter
+                            }).reply(message)
+        
