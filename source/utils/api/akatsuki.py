@@ -129,6 +129,12 @@ def get(url):
     if req.ok:
         return req.json()
 
+def ping_server() -> bool:
+    if (req := get("https://akatsuki.gg/api/v1/ping")) is not None:
+        if 'code' in req and req['code'] == 200:
+            return True
+    return False
+
 def get_leaderboard(mode=0, relax=0, pages=1, sort: SortOption = SortOption.PP) -> List[Tuple[User, ChosenMode]]:
     res = list()
     page = 1
