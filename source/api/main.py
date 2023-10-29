@@ -169,6 +169,27 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                 first_places.append(first_place.score)  
             return {'total': total, 'scores': first_places}
 
+@app.get("/user/first_places/all")
+async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+    first_places = list()
+    direction = sort_desc if desc else sort_asc
+    with postgres.instance.managed_session() as session:
+        query = session.query(DBUserFirstPlace).filter(DBUserFirstPlace.server == server,
+                                                            DBUserFirstPlace.mode == mode,
+                                                            DBUserFirstPlace.relax == relax,
+                                                            DBUserFirstPlace.date == date,
+                                                            ).join(DBScore).order_by(direction(getattr(DBScore, sort)))
+        if score_filter:
+            query = build_query(query.join(DBScore), DBScore, score_filter.split(","))
+        if beatmap_filter:
+            query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
+        for first_place in query.offset((page-1)*length).limit(length).all():
+            first_places.append(first_place.score)  
+        total = query.count()
+        return {'total': total, 'scores': first_places}
+
+
 @app.get("/user/clears")
 async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
