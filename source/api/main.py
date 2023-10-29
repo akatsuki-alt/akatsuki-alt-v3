@@ -123,7 +123,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                                                             DBUserFirstPlace.date == date,
                                                             ).join(DBScore).order_by(direction(getattr(DBScore, sort)))
         if score_filter:
-            query = build_query(query.join(DBScore), DBScore, score_filter.split(","))
+            query = build_query(query, DBScore, score_filter.split(","))
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
         if type == "all":
@@ -181,7 +181,7 @@ async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datet
                                                             DBUserFirstPlace.date == date,
                                                             ).join(DBScore).order_by(direction(getattr(DBScore, sort)))
         if score_filter:
-            query = build_query(query.join(DBScore), DBScore, score_filter.split(","))
+            query = build_query(query, DBScore, score_filter.split(","))
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
         for first_place in query.offset((page-1)*length).limit(length).all():
