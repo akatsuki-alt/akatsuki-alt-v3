@@ -232,3 +232,10 @@ class DBDiscordLink(Base):
     default_mode = Column("default_mode", SmallInteger, default=0)
     default_relax = Column("default_relax", SmallInteger, default=0)
     servers = Column("servers", JSONB, default={})
+
+class DBMetricsRequests(Base):
+    __tablename__ = "metrics_requests"
+    
+    url = Column("url", String, primary_key=True)
+    requests = Column("requests_count", BigInteger)
+    avg_response_time = Column("avg_response_time", Float)

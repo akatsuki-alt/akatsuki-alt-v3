@@ -1,3 +1,5 @@
+from utils.database import DBMetricsRequests
+import utils.postgres as postgres
 import requests
 import time
 
@@ -8,9 +10,19 @@ class RequestHandler:
         self.headers = headers
         self.last_call = 0
 
-    def get(self, url):
+    def get(self, url: str):
         elapsed = time.time() - self.last_call
         if elapsed < self.delay:
             time.sleep(self.delay-elapsed)
         self.last_call = time.time()
-        return requests.get(url, headers=self.headers)
+        start = time.time()
+        req = requests.get(url, headers=self.headers)
+        end = (time.time() - start)*1000
+        with postgres.instance.managed_session() as session:
+            if (metrics := session.get(DBMetricsRequests, url.split("?")[0])) is None:
+                metrics = DBMetricsRequests(url=url.split("?")[0], requests=0, avg_response_time=end)
+                session.add(metrics)
+            metrics.requests += 1
+            metrics.avg_response_time = (metrics.avg_response_time+end)/2
+            session.commit()
+        return req
