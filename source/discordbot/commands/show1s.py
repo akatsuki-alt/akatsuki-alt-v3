@@ -16,7 +16,7 @@ class FirstPlacesView(discord.ui.View):
         self.types = ['all', 'new', 'lost']
         self.types_sort = [e.value for e in ScoreSortEnum]
         self.type = 0
-        self.type_sort = 0
+        self.type_sort = 4
         self.desc = True
         self.api_options = api_options
         self.page = 1
