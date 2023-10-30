@@ -29,7 +29,6 @@ def build_query(query: Query, model, conditions=[]):
                     query = query.filter(to_match not in getattr(model, attr))
         elif attr == "mods":
             mods_bit = mods.mods_from_string(to_match)
-            print(mods_bit)
             match op:
                 case "!=":
                     query = query.filter(getattr(model, attr) != mods_bit)
