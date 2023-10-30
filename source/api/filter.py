@@ -52,4 +52,4 @@ def build_query(query: Query, model, conditions=[]):
                     query = query.filter(to_match in getattr(model, attr))
                 case "has not":
                     query = query.filter(to_match not in getattr(model, attr))
-        return query
+    return query
