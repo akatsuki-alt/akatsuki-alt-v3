@@ -7,7 +7,7 @@ import utils.database as database
 import utils.api.akatsuki as akat
 import utils.beatmaps as beatmaps
 from threading import Thread
-from datetime import date
+from datetime import date, timedelta
 import datetime
 import time
 
@@ -37,6 +37,11 @@ class AkatsukiTracker():
                 if not res or (time.time()-res.last_run)/60>60:
                     self.update_clan_lb()
                     session.merge(database.DBTaskStatus(task_name="akatsuki_clan_lb", last_run=time.time()), load=True)
+                    session.commit()
+                res = session.get(database.DBTaskStatus, "akatsuki_check_banned")
+                if not res or (time.time()-res.last_run)/60>120:
+                    self.check_banned_users()
+                    session.merge(database.DBTaskStatus(task_name="akatsuki_check_banned", last_run=time.time()), load=True)
                     session.commit()
             time.sleep(30)
     
@@ -338,6 +343,14 @@ class AkatsukiTracker():
                     session.merge(clan)
                 session.commit()
         logger.info(f"clan leaderboard update took {(time.time()-start)/60:.2f} minutes.")
+
+    def check_banned_users(self):
+        with postgres.instance.managed_session() as session:
+            for user in session.query(DBUser).filter(DBUser.server == "akatsuki", (datetime.datetime.now() - DBUser.latest_activity) < timedelta(days=59)).all():
+                if session.query(DBLiveUser).filter(DBLiveUser.server == "akatsuki", DBLiveUser.user_id == user.user_id).count() == 0:
+                    if akat.ping_server() and not akat.get_user_info(user.user_id):
+                        logger.info(f"found banned user {user.username} ({user.user_id})")
+                        self.ban_user(session, user.user_id)
 
     def ban_user(self, session: postgres.Session, user_id: int):
         for link in session.query(DBDiscordLink).all():
