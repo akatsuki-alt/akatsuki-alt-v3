@@ -2,12 +2,13 @@ from utils.logger import get_logger
 from utils.database import *
 from typing import * 
 
+from datetime import date, timedelta
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.akatsuki as akat
 import utils.beatmaps as beatmaps
+import utils.events as events
 from threading import Thread
-from datetime import date, timedelta
 import datetime
 import time
 
@@ -356,7 +357,9 @@ class AkatsukiTracker():
         for link in session.query(DBDiscordLink).all():
             if 'akatsuki' in link.servers:
                 if link.servers['akatsuki'] == user_id:
+                    events.queue.submit("user_banned", user_id=user_id, server="akatsuki", linked=True)
                     return # Ignore linked users, mostly autoban
+        events.queue.submit("user_banned", user_id=user_id, server="akatsuki", linked=False)
         logger.info(f"Wiping {user_id}")
         for first_place in session.query(DBUserFirstPlace).filter(
                 DBUserFirstPlace.server == "akatsuki",
