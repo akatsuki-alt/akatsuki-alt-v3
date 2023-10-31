@@ -51,4 +51,4 @@ class EventQueue:
                     f'Failed to evaluate task: {e}'
                 )
 
-queue = EventQueue(name="events", connection=Redis())
+queue = EventQueue(name="events", connection=Redis(host=config.REDIS_HOST))
