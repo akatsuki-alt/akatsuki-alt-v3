@@ -23,7 +23,7 @@ class Server:
 class Akatsuki(Server):
     
     def __init__(self) -> None:
-        super().__init__('akatsuki', 'https://akatsuki.gg', ['bancho', 'akatsuki'], supports_rx=True, supports_ap=True, notes="Full support")
+        super().__init__('akatsuki', 'https://akatsuki.gg', ['akatsuki', 'bancho'], supports_rx=True, supports_ap=True, notes="Full support")
 
     def lookup_user(self, user: str | int) -> Tuple[str, int] | None:
         if type(user) == int or user.isnumeric():
