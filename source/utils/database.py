@@ -92,6 +92,10 @@ class DBBeatmap(Base):
     mode = Column("mode", SmallInteger)
     tags = Column("tags", String)
     packs = Column("packs", String)
+    language = Column("language", String)
+    genre = Column("genre", String)
+    source = Column("source", String)
+    spotlight = Column("spotlight", bool)
     stars_nm = Column('stars_nm', Float)
     stars_ez = Column('stars_ez', Float)
     stars_hr = Column('stars_hr', Float)
@@ -239,3 +243,11 @@ class DBMetricsRequests(Base):
     url = Column("url", String, primary_key=True)
     requests = Column("requests_count", BigInteger)
     avg_response_time = Column("avg_response_time", Float)
+
+class DBCompletionCache(Base):
+    __tablename__ = "completion_cache"
+    
+    key = Column("key", String, primary_key=True)
+    value = Column("value", Integer)
+
+    
