@@ -5,6 +5,7 @@ from tasks.statistics import StatisticsTracker
 from tasks.akatsuki import AkatsukiTracker
 
 import discordbot.bot
+import utils.events
 import gamebot.bot
 import api.main
 import signal
@@ -17,10 +18,16 @@ def signal_handler(sig, frame):
     global suspended
     suspended = True
 
+def event_listener():
+    events = utils.events.queue.listen()
+    for func, args, kwargs in events: 
+        func(*args, **kwargs)
+
 if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
     threads = [
+        Thread(target=event_listener),
         Thread(target=BeatmapMaintainer().main),
         Thread(target=StatisticsTracker().main),
         Thread(target=AkatsukiTracker().main),
