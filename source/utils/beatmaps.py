@@ -113,6 +113,10 @@ def beatmap_to_db(beatmap: Beatmap):
         status['akatsuki'] = akat_beatmap["ranked"]-1
     else:
         status['akatsuki'] = 0
+    mapset = bancho.client.beatmapset(beatmap.beatmapset_id) # set in beatmap object is not complete?
+    language = 'Unspecified' if not mapset.language else mapset.language['name']
+    genre = 'Unspecified' if not mapset.genre else mapset.genre['name']
+    
     return DBBeatmap(
         beatmap_id=beatmap.id, 
         beatmap_set_id=beatmap.beatmapset_id, 
@@ -136,6 +140,10 @@ def beatmap_to_db(beatmap: Beatmap):
         tags=beatmap._beatmapset.tags,
         packs=",".join(beatmap._beatmapset.pack_tags) if beatmap._beatmapset.pack_tags else "",
         approved_date = approved_date,
+        language = language,
+        genre = genre,
+        source = mapset.source,
+        spotlight = mapset.spotlight,
         stars_nm=stars_nm,
         stars_ez = stars_ez,
         stars_hr = stars_hr,
