@@ -1,8 +1,8 @@
 from sqlalchemy.orm.attributes import flag_modified
 from ossapi import BeatmapsetSearchCategory
+from utils.api.servers import servers
 from utils.logger import get_logger
 from sqlalchemy import or_, Integer
-
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.bancho as bancho
@@ -10,7 +10,9 @@ import utils.beatmaps as beatmaps
 import utils.selfbot as selfbot
 
 from datetime import datetime, timedelta
+from utils.database import *
 from typing import *
+import math
 import time
 import re
 
@@ -43,6 +45,11 @@ class BeatmapMaintainer():
                 if not res or (time.time()-res.last_run)/60/60>1:
                     self.fix_status()
                     session.merge(database.DBTaskStatus(task_name="fix_beatmaps", last_run=time.time()), load=True)
+                    session.commit()
+                res = session.get(database.DBTaskStatus, "build_beatmap_cache")
+                if not res or (time.time()-res.last_run)/60/60>1:
+                    self.build_beatmap_cache()
+                    session.merge(database.DBTaskStatus(task_name="build_beatmap_cache", last_run=time.time()), load=True)
                     session.commit()
             time.sleep(30)
     
@@ -202,3 +209,47 @@ class BeatmapMaintainer():
                         pass
             session.commit()
         logger.info(f"Imported {imported} maps.")
+        
+    def build_beatmap_cache(self):
+        with postgres.instance.managed_session() as session:
+            for object in session.query(database.DBCompletionCache):
+                session.delete(object)
+            processed = list()
+            for server in servers:
+                for set in server.beatmap_sets:
+                    if set in processed:
+                        continue
+                    for x in range(12):
+                        for mode in range(4):
+                            cache = DBCompletionCache(key=f"stars_{set}_{mode}_{x}", value=0)
+                            if x != 11:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.stars_nm >= x , DBBeatmap.stars_nm < x+1).count()
+                            else:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.stars_nm >= x).count()
+                            session.add(cache)
+                    for x in range(12):
+                        for mode in range(4):
+                            cache = DBCompletionCache(key=f"od_{set}_{mode}_{x}", value=0)
+                            if x != 11:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.od >= x , DBBeatmap.od < x+1).count()
+                            else:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.od >= x).count()
+                            session.add(cache)
+                    for x in range(12):
+                        for mode in range(4):
+                            cache = DBCompletionCache(key=f"cs_{set}_{mode}_{x}", value=0)
+                            if x != 11:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.cs >= x , DBBeatmap.cs < x+1).count()
+                            else:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.cs >= x).count()
+                            session.add(cache)
+                    for x in range(12):
+                        for mode in range(4):
+                            cache = DBCompletionCache(key=f"ar_{set}_{mode}_{x}", value=0)
+                            if x != 11:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.ar >= x , DBBeatmap.ar < x+1).count()
+                            else:
+                                cache.value = session.query(DBBeatmap).filter(DBBeatmap.ranked_status[set].astext.cast(Integer) > 0, DBBeatmap.mode == mode, DBBeatmap.ar >= x).count()
+                            session.add(cache)
+                                   
+            session.commit()

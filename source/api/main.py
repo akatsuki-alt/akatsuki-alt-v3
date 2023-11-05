@@ -7,6 +7,7 @@ from utils.database import *
 from fastapi import FastAPI
 import datetime
 import uvicorn
+import math
 
 sort_desc = desc
 sort_asc = asc
@@ -247,6 +248,57 @@ async def get_user_leaderboard(user_id: int, server="akatsuki", date=str(datetim
             if (stats := session.get(model, (server, user_id, mode, relax))) is not None:
                 return {'global_rank': stats.global_rank, 'country_rank': stats.country_rank}
         return {'global_rank': -1, 'country_rank': -1}
+
+@app.get("/user/completion/stats")
+async def get_user_stars_completion(user_id: int, server: str = "akatsuki", mode: int = 0, relax: int = 0):
+    set = None
+    for srv in servers:
+        if srv.server_name == server:
+            set = srv.beatmap_sets[0]
+            break
+    if not set:
+        return
+    import time
+    with postgres.instance.managed_session() as session:
+        ar = {}
+        cs = {}
+        od = {}
+        sr = {}
+        for x in range(12):
+            ar[x] = 0
+            cs[x] = 0
+            od[x] = 0
+            sr[x] = 0
+            
+        start = time.time()
+        for score in session.query(DBScore).filter(DBScore.user_id == user_id, 
+                                                   DBScore.mode == mode, 
+                                                   DBScore.relax == relax, 
+                                                   DBScore.server == server
+                                                   ).join(DBBeatmap).all():
+            ar[min(11, int(score.beatmap.ar))] += 1
+            cs[min(11, int(score.beatmap.cs))] += 1
+            od[min(11, int(score.beatmap.od))] += 1
+            sr[min(11, int(score.beatmap.stars_nm))] += 1
+        res = {'stars': [], 'ar': [], 'cs': [], 'od': []}
+        if session.query(DBCompletionCache).count() == 0:
+            return res
+        for x in range(12):
+            max_ar = session.get(DBCompletionCache, (f"ar_{set}_{mode}_{x}")).value
+            max_cs = session.get(DBCompletionCache, (f"cs_{set}_{mode}_{x}")).value
+            max_od = session.get(DBCompletionCache, (f"od_{set}_{mode}_{x}")).value
+            max_sr = session.get(DBCompletionCache, (f"stars_{set}_{mode}_{x}")).value
+            if x != 11:
+                res['stars'].append({'name': f'{x}*', 'completed': sr[x], 'total': max_sr})
+                res['ar'].append({'name': f'AR {x}', 'completed': ar[x], 'total': max_ar})
+                res['cs'].append({'name': f'CS {x}', 'completed': cs[x], 'total': max_cs})
+                res['od'].append({'name': f'OD {x}', 'completed': od[x], 'total': max_od})
+            else:
+                res['stars'].append({'name': f'{x}*+', 'completed': sr[x], 'total': max_sr})
+                res['ar'].append({'name': f'AR {x}+', 'completed': ar[x], 'total': max_ar})
+                res['cs'].append({'name': f'CS {x}+', 'completed': cs[x], 'total': max_cs})
+                res['od'].append({'name': f'OD {x}+', 'completed': od[x], 'total': max_od})
+        return res
 
 @app.get("/user/info")
 async def get_user_info(user_id:int, server="akatsuki"):

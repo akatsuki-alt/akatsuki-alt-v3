@@ -95,7 +95,7 @@ class DBBeatmap(Base):
     language = Column("language", String)
     genre = Column("genre", String)
     source = Column("source", String)
-    spotlight = Column("spotlight", bool)
+    spotlight = Column("spotlight", Boolean)
     stars_nm = Column('stars_nm', Float)
     stars_ez = Column('stars_ez', Float)
     stars_hr = Column('stars_hr', Float)
