@@ -100,6 +100,30 @@ class AkatsukiTracker():
                     update_user(session, user.user_id, user.mode, user.relax, user.date, user_info, add_to_queue=False, fetch_recent=False)
                     session.delete(user)
                     session.commit()
+                    added = 0
+                    queries = [
+                        session.query(DBLiveUser).filter(DBLiveUser.global_rank < 500, DBLiveUser.mode == 0, DBLiveUser.relax == 1),
+                        session.query(DBLiveUser).filter(DBLiveUser.global_rank < 200),
+                        session.query(DBLiveUserScore).filter(DBLiveUserScore.ranked_score > 0)
+                    ]
+                    for query in queries:
+                        for user in query.all():
+                            if session.query(DBUserInfo).filter(
+                                DBUserInfo.mode == user.mode,
+                                DBUserInfo.relax == user.relax,
+                                DBUserInfo.server == "akatsuki",
+                                DBUserInfo.user_id == user.user_id
+                            ).count() == 0:
+                                added += 1
+                                session.merge(DBUserQueue(
+                                    server = "akatsuki",
+                                    user_id = user.user_id,
+                                    mode = user.mode,
+                                    relax = user.relax,
+                                    date = (date.today() - timedelta(days=1))
+                                ))
+                            if added == 20:
+                                break
             time.sleep(30)
 
     def update_live_lb(self) -> List[DBLiveUser]:
