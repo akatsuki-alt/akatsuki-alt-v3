@@ -22,7 +22,7 @@ class AkatsukiTracker():
     def main(self):
         queue_thread = Thread(target=self.process_queue)
         queue_thread.start()
-        while True:    
+        while True:
             with postgres.instance.managed_session() as session:
                 res = session.get(database.DBTaskStatus, "akatsuki_score_lb")
                 if not res or (time.time()-res.last_run)/60>15:
@@ -169,6 +169,7 @@ class AkatsukiTracker():
                             registered_on = user['registered_on'],
                             latest_activity = user['latest_activity'],
                             country = user['country'],
+                            followers = -1
                         ))
                     dbuser = DBLiveUser(
                         server="akatsuki",
