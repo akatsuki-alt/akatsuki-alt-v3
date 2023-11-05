@@ -6,6 +6,7 @@ from discordbot.commands.setdefault import SetDefaultCommand
 from discordbot.commands.addqueue import AddQueueCommand
 from discordbot.commands.servers import ServersCommand
 from discordbot.commands.recent import RecentCommand
+from discordbot.commands.users import UsersCommand
 from discordbot.commands.ping import PingCommand
 from discordbot.commands.link import LinkCommand
 from discordbot.commands.help import HelpCommand
@@ -25,3 +26,4 @@ bot.commands.append(ShowServer1sCommand())
 bot.commands.append(ShowClearsCommand())
 bot.commands.append(ShowServerClearsCommand())
 bot.commands.append(AddQueueCommand())
+bot.commands.append(UsersCommand())
