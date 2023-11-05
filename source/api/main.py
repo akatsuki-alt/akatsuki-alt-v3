@@ -344,5 +344,13 @@ async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: in
             beatmaps.append(beatmap)
     return beatmaps
 
+@app.get("/metrics/requests")
+async def get_requests_metrics():
+    metrics = list()
+    with postgres.instance.managed_session() as session:
+        for metric in session.query(DBMetricsRequests):
+            metrics.append(metric)
+    return metrics
+
 def main():
     uvicorn.run(app, host="0.0.0.0", port=4269)
