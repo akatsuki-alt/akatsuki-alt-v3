@@ -308,6 +308,7 @@ class AkatsukiTracker():
                             registered_on = user['registered_on'],
                             latest_activity = user['latest_activity'],
                             country = user['country'],
+                            followers = -1
                         ))
 
                     dbuser = DBLiveUserScore(
