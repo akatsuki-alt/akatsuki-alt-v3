@@ -270,7 +270,6 @@ async def get_user_stars_completion(user_id: int, server: str = "akatsuki", mode
             od[x] = 0
             sr[x] = 0
             
-        start = time.time()
         for score in session.query(DBScore).filter(DBScore.user_id == user_id, 
                                                    DBScore.mode == mode, 
                                                    DBScore.relax == relax, 
