@@ -26,11 +26,11 @@ class BeatmapMaintainer():
     def main(self):
         while True:    
             with postgres.instance.managed_session() as session:
-                res = session.get(database.DBTaskStatus, "import_beatmaps")
-                if not res:
-                    self.import_beatmaps()
-                    session.merge(database.DBTaskStatus(task_name="import_beatmaps", last_run=time.time()), load=True)
-                    session.commit()
+                #res = session.get(database.DBTaskStatus, "import_beatmaps")
+                #if not res:
+                #    self.import_beatmaps()
+                #    session.merge(database.DBTaskStatus(task_name="import_beatmaps", last_run=time.time()), load=True)
+                #    session.commit()
                 res = session.get(database.DBTaskStatus, "bancho_beatmaps")
                 if not res or (time.time()-res.last_run)/60/60>1:
                     self.update_bancho_maps()
