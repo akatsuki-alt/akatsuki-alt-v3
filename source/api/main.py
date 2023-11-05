@@ -304,6 +304,16 @@ async def get_user_info(user_id:int, server="akatsuki"):
     with postgres.instance.managed_session() as session:
         return session.get(DBUser, (user_id, server))
 
+@app.get("/user/list")
+async def get_user_list(server: str = "akatsuki", desc: bool = True, sort: str = "user_id", length: int = 100, page: int = 1, filter: str = ""):
+    direction = sort_desc if desc else sort_asc
+    with postgres.instance.managed_session() as session:
+        query = build_query(session.query(DBUser), DBUser, filter.split(","))
+        query = query.order_by(direction(getattr(DBUser, sort)))
+        query = query.offset(((page-1)*length)).limit(length)
+        return [user for user in query.all()]
+            
+
 @app.get("/clan/info")
 async def get_clan_info(clan_id:int, server="akatsuki"):
     with postgres.instance.managed_session() as session:
