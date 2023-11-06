@@ -141,15 +141,15 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
                     for first_place in query.all():
                         csv += "\t".join([str(getattr(first_place.score, c)) for c in columns])+"\n"
                     response = Response(content=csv, media_type="text/csv")
-                    response.headers["Content-Disposition"] = "attachment; filename=clears.csv"
+                    response.headers["Content-Disposition"] = "attachment; filename=first_places.csv"
                     return response
                 case DownloadEnum.collection:
                     beatmaps = list()
                     for first_place in query.all():
                         beatmaps.append(first_place.score.beatmap)
-                    response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
+                    response = StreamingResponse(content=collections.generate_collection(beatmaps, "first_places"), 
                                              media_type="application/octet-stream")
-                    response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
+                    response.headers["Content-Disposition"] = "attachment; filename=first_places.osdb"
                     return response
                 case _:
                     for first_place in query.offset((page-1)*length).limit(length).all():
@@ -216,15 +216,15 @@ async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datet
                 for first_place in query.all():
                     csv += "\t".join([str(getattr(first_place.score, c)) for c in columns])+"\n"
                 response = Response(content=csv, media_type="text/csv")
-                response.headers["Content-Disposition"] = "attachment; filename=clears.csv"
+                response.headers["Content-Disposition"] = "attachment; filename=first_places.csv"
                 return response
             case DownloadEnum.collection:
                 beatmaps = list()
                 for first_place in query.all():
                     beatmaps.append(first_place.score.beatmap)
-                response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "first_places"), 
                                              media_type="application/octet-stream")
-                response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
+                response.headers["Content-Disposition"] = "attachment; filename=first_places.osdb"
                 return response
             case _:
                 for first_place in query.offset((page-1)*length).limit(length).all():
@@ -262,9 +262,9 @@ async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=
                 beatmaps = list()
                 for score in query.all():
                     beatmaps.append(score.beatmap)
-                response = StreamingResponse(content=collections.generate_collection(beatmaps, "first_places"), 
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
                                              media_type="application/octet-stream")
-                response.headers["Content-Disposition"] = "attachment; filename=first_places.osdb"
+                response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
                 return response
             case _:
                 for score in query.offset((page-1)*length).limit(length).all():
