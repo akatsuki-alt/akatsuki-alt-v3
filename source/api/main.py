@@ -420,7 +420,7 @@ async def get_sets():
     return server_list
 
 @app.get("/beatmaps/list")
-async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100, beatmap_filter: str=""):
+async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
     beatmaps = list()
     with postgres.instance.managed_session() as session:
         query = session.query(DBBeatmap).filter(
@@ -429,9 +429,27 @@ async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: in
         )
         if beatmap_filter:
             query = build_query(query, DBBeatmap, beatmap_filter.split(","))
-        for beatmap in query.offset((page-1)*length).limit(length):
-            beatmaps.append(beatmap)
-    return beatmaps
+        match download_as:
+            case DownloadEnum.csv:
+                columns = [c.name for c in DBBeatmap.__table__.columns]
+                csv = "\t".join(columns)+"\n"
+                for beatmap in query.all():
+                    csv += "\t".join([str(getattr(beatmap, c)) for c in columns])+"\n"
+                response = Response(content=csv, media_type="text/csv")
+                response.headers["Content-Disposition"] = "attachment; filename=beatmaps.csv"
+                return response
+            case DownloadEnum.collection:
+                beatmaps = list()
+                for beatmap in query.all():
+                    beatmaps.append(beatmap)
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "beatmaps"), 
+                                             media_type="application/octet-stream")
+                response.headers["Content-Disposition"] = "attachment; filename=beatmaps.osdb"
+                return response
+            case _:
+                for beatmap in query.offset((page-1)*length).limit(length):
+                    beatmaps.append(beatmap)
+                return beatmaps
 
 @app.get("/metrics/requests")
 async def get_requests_metrics():
