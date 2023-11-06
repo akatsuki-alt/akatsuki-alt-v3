@@ -4,7 +4,9 @@ from api.filter import build_query
 import utils.postgres as postgres
 from utils.database import *
 
-from fastapi import FastAPI
+from starlette.responses import StreamingResponse
+from fastapi import FastAPI, Response
+import utils.collections as collections
 import datetime
 import uvicorn
 import math
@@ -35,6 +37,10 @@ class ScoreSortEnum(str, Enum):
     combo = "combo"
     rank = "rank"
     date = "date"
+
+class DownloadEnum(str, Enum):
+    csv = "csv"
+    collection = "collection"
 
 @app.get("/")
 async def root():
@@ -111,7 +117,7 @@ async def get_user(user_id:int, server="akatsuki", mode:int=0, relax:int=0,date=
         return session.get(DBStats, (user_id, server, mode, relax, date))
 
 @app.get("/user/first_places")
-async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
+async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, type=FirstPlacesEnum.all, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100, download_as: str = ""):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     first_places = list()
     yesterday = (date - datetime.timedelta(days=1))
@@ -128,10 +134,28 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
         if type == "all":
-            for first_place in query.offset((page-1)*length).limit(length).all():
-                first_places.append(first_place.score)  
-            total = query.count()
-            return {'total': total, 'scores': first_places}
+            match download_as:
+                case DownloadEnum.csv:
+                    columns = [c.name for c in DBScore.__table__.columns]
+                    csv = "\t".join(columns)+"\n"
+                    for first_place in query.all():
+                        csv += "\t".join([str(getattr(first_place.score, c)) for c in columns])+"\n"
+                    response = Response(content=csv, media_type="text/csv")
+                    response.headers["Content-Disposition"] = "attachment; filename=clears.csv"
+                    return response
+                case DownloadEnum.collection:
+                    beatmaps = list()
+                    for first_place in query.all():
+                        beatmaps.append(first_place.score.beatmap)
+                    response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
+                                             media_type="application/octet-stream")
+                    response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
+                    return response
+                case _:
+                    for first_place in query.offset((page-1)*length).limit(length).all():
+                        first_places.append(first_place.score)  
+                    total = query.count()
+                    return {'total': total, 'scores': first_places}
         elif type == "new":
             new = list()
             for first_place in query.all():
@@ -171,7 +195,7 @@ async def get_user_1s(user_id:int, server="akatsuki", mode:int=0, relax:int=0, t
             return {'total': total, 'scores': first_places}
 
 @app.get("/user/first_places/all")
-async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100,):
+async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), sort: str = ScoreSortEnum.date, desc: bool=True, score_filter: str = "", beatmap_filter: str = "", page:int=1, length:int=100, download_as: str = ""):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     first_places = list()
     direction = sort_desc if desc else sort_asc
@@ -185,14 +209,32 @@ async def get_user_1s(server="akatsuki", mode:int=0, relax:int=0, date=str(datet
             query = build_query(query, DBScore, score_filter.split(","))
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
-        for first_place in query.offset((page-1)*length).limit(length).all():
-            first_places.append(first_place.score)  
-        total = query.count()
-        return {'total': total, 'scores': first_places}
+        match download_as:
+            case DownloadEnum.csv:
+                columns = [c.name for c in DBScore.__table__.columns]
+                csv = "\t".join(columns)+"\n"
+                for first_place in query.all():
+                    csv += "\t".join([str(getattr(first_place.score, c)) for c in columns])+"\n"
+                response = Response(content=csv, media_type="text/csv")
+                response.headers["Content-Disposition"] = "attachment; filename=clears.csv"
+                return response
+            case DownloadEnum.collection:
+                beatmaps = list()
+                for first_place in query.all():
+                    beatmaps.append(first_place.score.beatmap)
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
+                                             media_type="application/octet-stream")
+                response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
+                return response
+            case _:
+                for first_place in query.offset((page-1)*length).limit(length).all():
+                    first_places.append(first_place.score)
+                total = query.count()
+                return {'total': total, 'scores': first_places}
 
 
 @app.get("/user/clears")
-async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
+async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100, download_as: str = ""):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
     direction = sort_desc if desc else sort_asc
@@ -207,13 +249,31 @@ async def get_user_clears(user_id:int, server="akatsuki", mode:int=0, relax:int=
             query = build_query(query, DBScore, score_filter.split(","))
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
-        for score in query.offset((page-1)*length).limit(length).all():
-            scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
-        total = query.count()
-        return {'total': total, 'scores': scores}
+        match download_as:
+            case DownloadEnum.csv:
+                columns = [c.name for c in DBScore.__table__.columns]
+                csv = "\t".join(columns)+"\n"
+                for score in query.all():
+                    csv += "\t".join([str(getattr(score, c)) for c in columns])+"\n"
+                response = Response(content=csv, media_type="text/csv")
+                response.headers["Content-Disposition"] = "attachment; filename=first_places.csv"
+                return response
+            case DownloadEnum.collection:
+                beatmaps = list()
+                for score in query.all():
+                    beatmaps.append(score.beatmap)
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "first_places"), 
+                                             media_type="application/octet-stream")
+                response.headers["Content-Disposition"] = "attachment; filename=first_places.osdb"
+                return response
+            case _:
+                for score in query.offset((page-1)*length).limit(length).all():
+                    scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
+                total = query.count()
+                return {'total': total, 'scores': scores}
 
 @app.get("/user/clears/all")
-async def get_all_clears( server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100,):
+async def get_all_clears( server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, completed=3, score_filter: str = "", beatmap_filter: str = "", sort: str = ScoreSortEnum.date, desc: bool=True, length:int=100, download_as: str = ""):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     scores = list()
     direction = sort_desc if desc else sort_asc
@@ -227,10 +287,28 @@ async def get_all_clears( server="akatsuki", mode:int=0, relax:int=0, date=str(d
             query = build_query(query, DBScore, score_filter.split(","))
         if beatmap_filter:
             query = build_query(query.join(DBBeatmap), DBBeatmap, beatmap_filter.split(","))
-        for score in query.offset((page-1)*length).limit(length).all():
-            scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
-        total = query.count()
-        return {'total': total, 'scores': scores}
+        match download_as:
+            case DownloadEnum.csv:
+                columns = [c.name for c in DBScore.__table__.columns]
+                csv = "\t".join(columns)+"\n"
+                for score in query.all():
+                    csv += "\t".join([str(getattr(score, c)) for c in columns])+"\n"
+                response = Response(content=csv, media_type="text/csv")
+                response.headers["Content-Disposition"] = "attachment; filename=clears.csv"
+                return response
+            case DownloadEnum.collection:
+                beatmaps = list()
+                for score in query.all():
+                    beatmaps.append(score.beatmap)
+                response = StreamingResponse(content=collections.generate_collection(beatmaps, "clears"), 
+                                             media_type="application/octet-stream")
+                response.headers["Content-Disposition"] = "attachment; filename=clears.osdb"
+                return response
+            case _:
+                for score in query.offset((page-1)*length).limit(length).all():
+                    scores.append(session.query(DBScore).filter(DBScore.score_id == score.score_id).first())  
+                total = query.count()
+                return {'total': total, 'scores': scores}
 
 
 @app.get("/user/rank")
