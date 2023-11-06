@@ -55,6 +55,36 @@ class ClearsView(discord.ui.View):
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
+    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
+    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+        await interaction.response.defer()
+        if self.all:
+            links = instance.get_all_clears(
+                server=self.api_options['server'],
+                mode=self.api_options['mode'],
+                relax=self.api_options['relax'],
+                sort=self.types[self.type],
+                desc=self.desc,
+                score_filter=self.api_options['score_filter'],
+                beatmap_filter=self.api_options['beatmap_filter'],
+            )
+        else:
+            links = instance.get_user_clears(
+                user_id=self.api_options['user_id'],
+                server=self.api_options['server'],
+                mode=self.api_options['mode'],
+                relax=self.api_options['relax'],
+                sort=self.types[self.type],
+                desc=self.desc,
+                score_filter=self.api_options['score_filter'],
+                beatmap_filter=self.api_options['beatmap_filter'],
+                download_link=True
+            )
+        embed = Embed(title="Download options:", 
+                      description="\n".join([f"[{key}]({value})" for (key,value) in links.items()]))
+        await interaction.followup.send(embed=embed)
+
+
     def get_embed_user(self):
         embed = Embed(title="Clears")
         scores = instance.get_user_clears(
