@@ -65,7 +65,27 @@ class FirstPlacesView(discord.ui.View):
             button.label = "Order: ↓"
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
-   
+
+    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
+    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+        await interaction.response.defer()
+        links = instance.get_user_1s(
+            user_id = self.api_options['user_id'],
+            server = self.api_options['server'],
+            mode = self.api_options['mode'],
+            relax = self.api_options['relax'],
+            type = self.types[self.type],
+            sort=self.types_sort[self.type_sort],
+            desc=self.desc,
+            score_filter=self.api_options['score_filter'],
+            beatmap_filter=self.api_options['beatmap_filter'],
+            download_link=True
+        )
+        embed = discord.Embed(title="Download options:", 
+                      description="\n".join([f"[{key}]({value})" for (key,value) in links.items()]))
+        await interaction.followup.send(embed=embed)
+
+
     def get_embed(self):
         embed = discord.Embed(title=f"First places")
         content = '```'
@@ -147,7 +167,25 @@ class AllFirstPlacesView(discord.ui.View):
             button.label = "Order: ↓"
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
-   
+
+    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
+    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+        await interaction.response.defer()
+        links = instance.get_all_1s(
+            server = self.api_options['server'],
+            mode = self.api_options['mode'],
+            relax = self.api_options['relax'],
+            sort=self.types_sort[self.type_sort],
+            desc=self.desc,
+            score_filter=self.api_options['score_filter'],
+            beatmap_filter=self.api_options['beatmap_filter'],
+            download_link=True
+        )
+        embed = discord.Embed(title="Download options:", 
+                      description="\n".join([f"[{key}]({value})" for (key,value) in links.items()]))
+        await interaction.followup.send(embed=embed)
+
+
     def get_embed(self):
         embed = discord.Embed(title=f"First places")
         content = '```'
