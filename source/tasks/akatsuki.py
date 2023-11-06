@@ -122,6 +122,7 @@ class AkatsukiTracker():
                                     relax = user.relax,
                                     date = (date.today() - timedelta(days=1))
                                 ))
+                                session.commit()
                             if added == 20:
                                 break
             time.sleep(30)
@@ -145,6 +146,7 @@ class AkatsukiTracker():
                     relax = link.default_relax,
                     date = date.today()
                 ))
+                session.commit()
             old_users = session.query(DBLiveUser).filter(DBLiveUser.server == "akatsuki").all()
             to_update: List[DBLiveUser] = list()
             
@@ -445,7 +447,9 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
             mode = mode,
             relax = relax,
             date = date,
-    ))
+        ))
+        session.commit()
+
     if not fetch_recent:
         return
     if (playtime := session.get(DBAKatsukiPlaytime, (user_id, mode, relax))) is None:
