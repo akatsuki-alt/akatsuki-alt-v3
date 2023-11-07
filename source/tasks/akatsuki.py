@@ -213,13 +213,15 @@ class AkatsukiTracker():
             yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).date()
             for user_id in by_id:
                 user_info = akat.get_user_info(user_id)
-                if not user_info and akat.ping_server():
-                    logger.info(f"found banned user ({user.user_id})")
-                    self.ban_user(session, user.user_id)
-                else:
-                    logger.info("Server down.")
-                    time.sleep(60)
-                    continue
+                if not user_info:
+                    if akat.ping_server():
+                        logger.info(f"found banned user ({user.user_id})")
+                        self.ban_user(session, user.user_id)
+                        continue
+                    else:
+                        logger.info(f"Server down? cant process {user.user_id}")
+                        time.sleep(60)
+                        continue
                 logger.info(f"Updating {user_info['username']}")
                 dbuser = session.query(DBUser).filter(DBUser.server == "akatsuki", DBUser.user_id == user_id).first()
                 dbuser.latest_activity = user_info['latest_activity']
