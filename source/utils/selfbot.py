@@ -37,6 +37,8 @@ class EmbedImage(TypedDict):
 class Embed(TypedDict):
     type: str
     title: str
+    url: str
+    description: str
     color: int
     fields: List[Field]
     author: EmbedAuthor
