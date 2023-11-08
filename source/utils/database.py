@@ -78,6 +78,7 @@ class DBBeatmap(Base):
     title = Column("title", String)
     version = Column("version", String)
     mapper = Column("mapper", String)
+    nominator = Column("nominator", JSONB, default={'bancho': "Unknown", 'akatsuki': "Unknown"})
     ranked_status = Column("ranked_status", JSONB, default={'bancho': -2, 'akatsuki': -2})
     last_checked = Column('last_checked', DateTime, default=datetime(year=1984, month=1, day=1))
     ar = Column('ar', Float)
