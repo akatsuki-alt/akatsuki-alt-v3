@@ -1,4 +1,5 @@
 from sqlalchemy.orm.attributes import flag_modified
+from utils.parser import parse_akatsuki_embed
 from ossapi import BeatmapsetSearchCategory
 from utils.api.servers import servers
 from utils.logger import get_logger
@@ -87,7 +88,6 @@ class BeatmapMaintainer():
 
     def update_akatsuki_maps(self, full_run=False):
         logger.info("Fetching akatsuki beatmaps...")
-        MARKDOWN_URL_REGEX = r"\[(.*?)\]\((\S*)(?:\s'(.*?)')?\)"
         found: List[selfbot.Message] = list()
         for x in range(0, 10000000 if full_run else 250 ,25):
             messages = selfbot.search_channel(offset=x)
@@ -96,27 +96,21 @@ class BeatmapMaintainer():
                 break
             found.extend(messages)
         found.reverse()
-        statuses = {'ranked': 0, 'loved': 4}
-        maps = {}
+        maps = list()
         for message in found:
             message = message[0]
             if not message['embeds']:
                 continue
             embed = message['embeds'][0]
-            status = 0
-            beatmap_id = int(re.match(MARKDOWN_URL_REGEX, embed['fields'][4]['value']).groups(1)[1].split("/")[-1])
-            if embed['fields'][0]['value'].lower() in statuses:
-                status = statuses[embed['fields'][0]['value'].lower()]
-            maps[beatmap_id] = status
+            maps.append(parse_akatsuki_embed(embed))
         logger.info(f"Found {len(maps)} Akatsuki updates")
         with postgres.instance.managed_session() as session:
-            for id, _ in maps.items():
-                #logger.info(f"updating {id}")
+            for beatmap_id, nominator in maps:
                 try:
-                    beatmap = bancho.client.beatmap(beatmap_id=id)
+                    beatmap = bancho.client.beatmap(beatmap_id=beatmap_id)
                     time.sleep(0.5)
                 except:
-                    if (beatmap := beatmaps.load_beatmap(session, id)) is not None:
+                    if (beatmap := beatmaps.load_beatmap(session, beatmap_id)) is not None:
                         beatmap.ranked_status['akatsuki'] = -2
                         flag_modified(beatmap, 'ranked_status')
                         session.commit()
