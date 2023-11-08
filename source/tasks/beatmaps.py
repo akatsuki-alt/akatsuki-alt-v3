@@ -115,7 +115,13 @@ class BeatmapMaintainer():
                         flag_modified(beatmap, 'ranked_status')
                         session.commit()
                     continue
-                session.merge(beatmaps.beatmap_to_db(beatmap), load=True)
+                db_beatmap = beatmaps.beatmap_to_db(beatmap)
+                if db_beatmap.nominator:
+                    db_beatmap.nominator['akatsuki'] = nominator
+                else:
+                    db_beatmap.nominator = {'bancho': 'Unknown', 'akatsuki': nominator}
+                flag_modified(db_beatmap, 'nominator')
+                session.merge(db_beatmap, load=True)
                 session.commit()
                 session.flush()
     
