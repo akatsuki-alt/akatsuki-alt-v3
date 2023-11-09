@@ -419,14 +419,10 @@ async def get_sets():
     return server_list
 
 @app.get("/beatmaps/list")
-async def get_beatmaps(set_name: str, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
+async def get_beatmaps(page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
     beatmaps = list()
-    set_name = set_name.split(",")
     with postgres.instance.managed_session() as session:
-        query = session.query(DBBeatmap).filter(
-            DBBeatmap.mode == mode,
-            or_(DBBeatmap.ranked_status[set].astext.cast(Integer) == ranked_status for set in set_name)
-        )
+        query = session.query(DBBeatmap)
         if beatmap_filter:
             query = build_query(query, DBBeatmap, beatmap_filter.split(","))
         match download_as:
