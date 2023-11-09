@@ -94,7 +94,7 @@ class ShowCommand(Command):
         embed.add_field(name=f"Total score", value=f"{stats.total_score:,} {total_score}")
         embed.add_field(name=f"Total hits", value=f"{stats.total_hits:,} {total_hits}")
         embed.add_field(name=f"Play count", value=f"{stats.play_count:,} {play_count}")
-        embed.add_field(name=f"Play time", value=f"{stats.play_time/60:,.2f}h {play_time}")
+        embed.add_field(name=f"Play time", value=f"{stats.play_time/60/60:,.2f}h {play_time}")
         embed.add_field(name=f"Replays watched", value=f"{stats.replays_watched:,} {replays_watched}")
         embed.add_field(name=f"Level", value=f"{current_level} +{level_percentage:.2f}% {level}")
         embed.add_field(name=f"Accuracy", value=f"{stats.accuracy:.2f}% {accuracy}")
