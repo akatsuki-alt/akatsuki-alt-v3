@@ -122,7 +122,7 @@ def beatmap_to_db(beatmap: Beatmap):
     genre = 'Unspecified' if not mapset.genre else mapset.genre['name']
     nominators = {'bancho': 'Unknown', 'akatsuki': 'Unknown'}
     if mapset.current_nominations:
-        nominators['bancho'] = ','.join([bancho.client.user(nominator).username for nominator in mapset.current_nominations])
+        nominators['bancho'] = ','.join([bancho.client.user(nominator.user_id).username for nominator in mapset.current_nominations])
     return DBBeatmap(
         beatmap_id=beatmap.id, 
         beatmap_set_id=beatmap.beatmapset_id, 
