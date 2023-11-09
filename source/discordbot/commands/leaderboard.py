@@ -27,7 +27,7 @@ class LeaderboardView(View):
         
     def get_embed(self):
         embed = Embed(title="Leaderboards")
-        total, lb = instance.get_user_extra_leaderboard(
+        lb = instance.get_user_extra_leaderboard(
             server=self.api_options['server'],
             mode=self.api_options['mode'],
             relax=self.api_options['relax'],
@@ -35,9 +35,10 @@ class LeaderboardView(View):
             length=10,
             type=self.api_options['type']
         )
-        if not lb:
+        if not lb or not lb[1]:
             embed.description = "Empty :/"
             return embed
+        embed.title += f" ({lb[0]:,})"
         content = "```"
         rank = 10*(self.page-1)
         entry = "first_places"
@@ -45,7 +46,7 @@ class LeaderboardView(View):
             if enum.value == self.api_options['type']:
                 entry = enum.name
                 break
-        for user in lb:
+        for user in lb[1]:
             rank+=1
             user_info = instance.get_user_info(user.user_id, user.server)
             username = 'API error'

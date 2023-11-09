@@ -87,7 +87,7 @@ class ClearsView(View):
 
     def get_embed_user(self):
         embed = Embed(title="Clears")
-        total, scores = instance.get_user_clears(
+        scores = instance.get_user_clears(
             user_id=self.api_options['user_id'],
             server=self.api_options['server'],
             mode=self.api_options['mode'],
@@ -104,7 +104,7 @@ class ClearsView(View):
             content += 'No scores :(\n```'
             embed.description = content
             return embed
-        embed.title += f" ({scores[0]})"
+        embed.title += f" ({scores[0]:,})"
         with postgres.instance.managed_session() as session:
             for score in scores[1]:
                 if (beatmap := load_beatmap(session, score.beatmap_id)) is not None:
@@ -137,7 +137,7 @@ class ClearsView(View):
             content += 'No scores :(\n```'
             embed.description = content
             return embed
-        embed.title += f" ({scores[0]})"
+        embed.title += f" ({scores[0]:,})"
         with postgres.instance.managed_session() as session:
             for score in scores[1]:
                 if (beatmap := load_beatmap(session, score.beatmap_id)) is not None:
