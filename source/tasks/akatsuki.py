@@ -244,14 +244,19 @@ class AkatsukiTracker():
             for user in session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.date == date).all():
                 if user.user_id in by_id:
                     continue
-                inactive_updated += 1
+                updated = False
                 if (pp := session.get(DBLiveUser, ("akatsuki", user.user_id, user.mode, user.relax))) is not None:
-                    user.global_rank = pp.global_rank
-                    user.country_rank = pp.country_rank
+                    if user.global_rank != pp.global_rank or user.country_rank != pp.country_rank:
+                        user.global_rank = pp.global_rank
+                        user.country_rank = pp.country_rank
+                        updated = True
                 if (score := session.get(DBLiveUserScore, ("akatsuki", user.user_id, user.mode, user.relax))) is not None:
-                    user.global_score_rank = score.global_rank
-                    user.country_score_rank = score.country_rank
-                session.merge(user)
+                    if user.global_score_rank != score.global_rank or user.country_score_rank != score.country_rank:
+                        user.global_score_rank = score.global_rank
+                        user.country_score_rank = score.country_rank
+                        updated = True
+                if updated:
+                    inactive_updated += 1
             for user in session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.date == yesterday).all():
                 if not session.get(DBStats, (user.user_id, "akatsuki", user.mode, user.relax, date)):
                     inactive_updated += 1
