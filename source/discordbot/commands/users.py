@@ -1,6 +1,6 @@
 from discord import Message, Embed, Interaction, ButtonStyle
 from utils.api.akatsukialt.akataltapi import UserSortEnum
-from discord.ui.view import View, Button, button
+from discord.ui import View, Button, button
 from utils.api.akataltapi import instance
 from utils.parser import parse_args
 from discordbot.bot import Command
