@@ -1,5 +1,4 @@
 from akatsuki_pp_py import Beatmap as calc_beatmap
-from requests.exceptions import RemoteDisconnected
 from akatsuki_pp_py import Calculator
 from utils.files import BinaryFile, exists
 from utils.logger import get_logger
@@ -116,7 +115,7 @@ def beatmap_to_db(beatmap: Beatmap):
         status['akatsuki'] = 0
     try:
         mapset = bancho.client.beatmapset(beatmap.beatmapset_id) # set in beatmap object is not complete?
-    except RemoteDisconnected:
+    except:
         time.sleep(15)
         return beatmap_to_db(beatmap)
     language = 'Unspecified' if not mapset.language else mapset.language['name']
