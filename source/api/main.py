@@ -3,7 +3,6 @@ from utils.api.servers import servers
 from fastapi import FastAPI, Response
 from api.filter import build_query
 from utils.database import *
-from sqlalchemy import or_
 
 import utils.collections as collections
 import utils.postgres as postgres
@@ -56,11 +55,12 @@ async def get_user_leaderboard(server="akatsuki", mode:int=0, relax:int=0, page:
     with postgres.instance.managed_session() as session:
         if order == 'global_rank' or order == 'global_score_rank':
             model = DBLiveUser if order == 'global_rank' else DBLiveUserScore
-            for stats in session.query(model).filter(model.server == server, model.mode == mode, 
+            query = session.query(model).filter(model.server == server, model.mode == mode, 
                                                      model.relax == relax).order_by(
-                                                         model.global_rank).offset((page-1)*length).limit(length).all():
+                                                         model.global_rank)
+            for stats in query.offset((page-1)*length).limit(length).all():
                 users.append(stats)
-    return users
+        return {'total': query.count(), 'users': users}
 
 @app.get("/leaderboard/user_extra")
 async def get_user_statistics(server="akatsuki", date=str(datetime.datetime.now().date()), mode:int=0, relax:int=0, page:int=1, length:int=100, type: str = TypeEnum.clears):
@@ -86,27 +86,29 @@ async def get_user_statistics(server="akatsuki", date=str(datetime.datetime.now(
     users = []
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     with postgres.instance.managed_session() as session:
-        for stats in session.query(DBStats).filter(DBStats.server == server, DBStats.mode == mode,
+        query = session.query(DBStats).filter(DBStats.server == server, DBStats.mode == mode,
                                                    DBStats.relax == relax, DBStats.date == date).order_by(
-                                                       text(order)).offset((page-1)*length).limit(length).all():
+                                                       text(order))
+        for stats in query.offset((page-1)*length).limit(length).all():
             users.append(stats)
-    return users
+        return {'total': query.count(), 'users': users}
 
 @app.get("/leaderboard/clan")
 async def get_clan_leaderboard(server="akatsuki", mode:int=0, relax:int=0, date=str(datetime.datetime.now().date()), page:int=1, length:int=100, type: str = TypeEnum.pp):
     date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     length = min(100, length)
-    users = []
+    clans = []
     with postgres.instance.managed_session() as session:
         orders = {'pp': 'global_rank', '1s': 'global_rank_1s', 'score': 'ranked_score DESC', 'total_score': 'total_score DESC', 'play_count': 'play_count DESC'}
         order = orders['pp']
         if type in orders:
             order = orders[type]
-        for stats in session.query(DBClanStats).filter(DBClanStats.server == server, DBClanStats.mode == mode, 
+        query = session.query(DBClanStats).filter(DBClanStats.server == server, DBClanStats.mode == mode, 
                                                      DBClanStats.relax == relax, DBClanStats.date == date).order_by(
-                                                         text(order)).offset((page-1)*length).limit(length).all():
-            users.append(stats)
-    return users
+                                                         text(order))
+        for stats in query.offset((page-1)*length).limit(length).all():
+            clans.append(stats)
+        return {'total': query.count(), 'clans': clans}
 
 
 @app.get("/user/stats")
@@ -389,7 +391,7 @@ async def get_user_list(server: str = "akatsuki", desc: bool = True, sort: str =
         if filter:
             query = build_query(query, DBUser, filter.split(","))
         query = query.offset(((page-1)*length)).limit(length)
-        return [user for user in query.all()]
+        return {'total': query.count(), 'users': [user for user in query.all()]}
             
 
 @app.get("/clan/info")
@@ -445,7 +447,7 @@ async def get_beatmaps(page: int = 1, length: int = 100, beatmap_filter: str = "
             case _:
                 for beatmap in query.offset((page-1)*length).limit(length):
                     beatmaps.append(beatmap)
-                return beatmaps
+                return {'total': query.count(), 'beatmaps': beatmaps}
 
 @app.get("/metrics/requests")
 async def get_requests_metrics():
