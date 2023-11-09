@@ -1,19 +1,20 @@
 from akatsuki_pp_py import Beatmap as calc_beatmap
+from requests.exceptions import RemoteDisconnected
 from akatsuki_pp_py import Calculator
-
 from utils.files import BinaryFile, exists
 from utils.logger import get_logger
 
 from utils.database import DBBeatmap
-import utils.postgres as postgres
 from ossapi import Beatmap
-import utils.mods as mods
 
 import utils.api.akatsuki as akatsuki
+import utils.postgres as postgres
 import utils.api.bancho as bancho
+import utils.mods as mods
 import datetime
 import requests
 import config
+import time
 
 DEFAULT_HEADERS = {"user-agent": "akatsukialt!/KompirBot fetch service"}
 logger = get_logger("beatmaps")
@@ -113,7 +114,11 @@ def beatmap_to_db(beatmap: Beatmap):
         status['akatsuki'] = akat_beatmap["ranked"]-1
     else:
         status['akatsuki'] = 0
-    mapset = bancho.client.beatmapset(beatmap.beatmapset_id) # set in beatmap object is not complete?
+    try:
+        mapset = bancho.client.beatmapset(beatmap.beatmapset_id) # set in beatmap object is not complete?
+    except RemoteDisconnected:
+        time.sleep(15)
+        return beatmap_to_db(beatmap)
     language = 'Unspecified' if not mapset.language else mapset.language['name']
     genre = 'Unspecified' if not mapset.genre else mapset.genre['name']
     nominators = {'bancho': 'Unknown', 'akatsuki': 'Unknown'}
