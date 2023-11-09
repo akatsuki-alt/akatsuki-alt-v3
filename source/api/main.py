@@ -1,15 +1,14 @@
-
-from utils.api.servers import servers
-from api.filter import build_query
-import utils.postgres as postgres
-from utils.database import *
-
 from starlette.responses import StreamingResponse
+from utils.api.servers import servers
 from fastapi import FastAPI, Response
+from api.filter import build_query
+from utils.database import *
+from sqlalchemy import or_
+
 import utils.collections as collections
+import utils.postgres as postgres
 import datetime
 import uvicorn
-import math
 
 sort_desc = desc
 sort_asc = asc
@@ -420,12 +419,13 @@ async def get_sets():
     return server_list
 
 @app.get("/beatmaps/list")
-async def get_beatmaps(set_name, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
+async def get_beatmaps(set_name: str, ranked_status: int = 1, mode: int = 0, page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
     beatmaps = list()
+    set_name = set_name.split(",")
     with postgres.instance.managed_session() as session:
         query = session.query(DBBeatmap).filter(
             DBBeatmap.mode == mode,
-            DBBeatmap.ranked_status[set_name].astext.cast(Integer) == ranked_status
+            or_(DBBeatmap.ranked_status[set].astext.cast(Integer) == ranked_status for set in set_name)
         )
         if beatmap_filter:
             query = build_query(query, DBBeatmap, beatmap_filter.split(","))
