@@ -116,7 +116,9 @@ def beatmap_to_db(beatmap: Beatmap):
     mapset = bancho.client.beatmapset(beatmap.beatmapset_id) # set in beatmap object is not complete?
     language = 'Unspecified' if not mapset.language else mapset.language['name']
     genre = 'Unspecified' if not mapset.genre else mapset.genre['name']
-    
+    nominators = {'bancho': 'Unknown', 'akatsuki': 'Unknown'}
+    if mapset.current_nominations:
+        nominators['bancho'] = ','.join([bancho.client.user(nominator).username for nominator in mapset.current_nominations])
     return DBBeatmap(
         beatmap_id=beatmap.id, 
         beatmap_set_id=beatmap.beatmapset_id, 
@@ -126,6 +128,7 @@ def beatmap_to_db(beatmap: Beatmap):
         version=beatmap.version,
         mapper=beatmap._beatmapset.creator,
         ranked_status=status,
+        nominators = nominators,
         last_checked=datetime.datetime.now(),
         ar=beatmap.ar,
         od=beatmap.accuracy,
