@@ -54,7 +54,7 @@ class UsersView(View):
 
     def get_embed(self):
         embed = Embed(title="Users")
-        users = instance.get_user_list(
+        total, users = instance.get_user_list(
             server = self.api_options['server'],
             page = self.page,
             length=7,

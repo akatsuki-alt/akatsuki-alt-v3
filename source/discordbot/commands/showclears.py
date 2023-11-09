@@ -87,7 +87,7 @@ class ClearsView(View):
 
     def get_embed_user(self):
         embed = Embed(title="Clears")
-        scores = instance.get_user_clears(
+        total, scores = instance.get_user_clears(
             user_id=self.api_options['user_id'],
             server=self.api_options['server'],
             mode=self.api_options['mode'],

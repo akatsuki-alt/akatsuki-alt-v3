@@ -27,7 +27,7 @@ class LeaderboardView(View):
         
     def get_embed(self):
         embed = Embed(title="Leaderboards")
-        lb = instance.get_user_extra_leaderboard(
+        total, lb = instance.get_user_extra_leaderboard(
             server=self.api_options['server'],
             mode=self.api_options['mode'],
             relax=self.api_options['relax'],
