@@ -132,7 +132,7 @@ def beatmap_to_db(beatmap: Beatmap):
         version=beatmap.version,
         mapper=beatmap._beatmapset.creator,
         ranked_status=status,
-        nominators = nominators,
+        nominator = nominators,
         last_checked=datetime.datetime.now(),
         ar=beatmap.ar,
         od=beatmap.accuracy,
