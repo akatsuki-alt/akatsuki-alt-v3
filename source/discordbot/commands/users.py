@@ -1,15 +1,14 @@
+from discord import Message, Embed, Interaction, ButtonStyle
 from utils.api.akatsukialt.akataltapi import UserSortEnum
+from discord.ui.view import View, Button, button
 from utils.api.akataltapi import instance
-from discordbot.bot import Command
-from discord import Message, Embed
 from utils.parser import parse_args
+from discordbot.bot import Command
 from typing import List
 
-import utils.postgres as postgres
 import pycountry
-import discord
 
-class UsersView(discord.ui.View):
+class UsersView(View):
     
     def __init__(self, api_options):
         super().__init__()
@@ -19,20 +18,20 @@ class UsersView(discord.ui.View):
         self.api_options = api_options
         self.page = 1
     
-    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Previous", style=ButtonStyle.gray)
+    async def prev_button(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         self.page = max(self.page-1, 1)
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Next", style=ButtonStyle.gray)
+    async def next_button(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page += 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
  
-    @discord.ui.button(label="Sort: user_id",style=discord.ButtonStyle.gray)
-    async def toggle_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Sort: user_id", style=ButtonStyle.gray)
+    async def toggle_type(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.type += 1
         if self.type == len(self.types):
@@ -41,8 +40,8 @@ class UsersView(discord.ui.View):
         button.label = f"Sort: {self.types[self.type]}"
         await interaction.message.edit(embed=self.get_embed(), view=self)
     
-    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
-    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Order: ↓", style=ButtonStyle.gray)
+    async def toggle_desc(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         if self.desc:
             self.desc = False

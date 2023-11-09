@@ -1,7 +1,7 @@
 from utils.api.servers import servers
 from discord import Message, Embed
 from discordbot.bot import Command
-from typing import *
+from typing import List
 
 class ServersCommand(Command):
     

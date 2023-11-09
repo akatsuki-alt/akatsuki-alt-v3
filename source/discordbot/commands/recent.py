@@ -1,13 +1,13 @@
-from typing import List
-
+from utils.beatmaps import load_beatmap, get_calc_beatmap
 from akatsuki_pp_py import Calculator
 from discord import Message, Embed
 from discordbot.bot import Command
 from utils.parser import parse_args
-from utils.beatmaps import load_beatmap, get_calc_beatmap
+from typing import List
+
 import utils.postgres as postgres
 import utils.mods as mods
-from datetime import datetime
+
 
 class RecentCommand(Command):
     

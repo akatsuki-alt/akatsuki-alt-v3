@@ -1,14 +1,12 @@
 from sqlalchemy.orm.attributes import flag_modified
 from utils.database import DBDiscordLink
-
 from utils.api.servers import servers
 from utils.parser import parse_args
-
-from discord import Message, Embed
 from discordbot.bot import Command
+from discord import Message
+from typing import List
 
 import utils.postgres as postgres
-from typing import *
 
 class LinkCommand(Command):
     

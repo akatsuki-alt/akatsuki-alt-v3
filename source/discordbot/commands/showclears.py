@@ -1,16 +1,16 @@
-from typing import List, Optional
-
-from discord import Message, Embed
-from discordbot.bot import Command
-import discord
-from utils.parser import parse_args
-from utils.api.akataltapi import instance
+from discord import Message, Embed, ButtonStyle, Interaction
 from utils.api.akatsukialt.akataltapi import ScoreSortEnum
-import utils.postgres as postgres
+from discord.ui import View, button, Button
+from utils.api.akataltapi import instance
 from utils.beatmaps import load_beatmap
 from utils.mods import get_mods_simple
+from utils.parser import parse_args
+from discordbot.bot import Command
+from typing import List
 
-class ClearsView(discord.ui.View):
+import utils.postgres as postgres
+
+class ClearsView(View):
     
     def __init__(self, api_options, all=False):
         super().__init__()
@@ -21,20 +21,20 @@ class ClearsView(discord.ui.View):
         self.all = all
         self.page = 1
     
-    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Previous", style=ButtonStyle.gray)
+    async def prev_button(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         self.page = max(self.page-1, 1)
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Next", style=ButtonStyle.gray)
+    async def next_button(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page += 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
  
-    @discord.ui.button(label="Sort: pp",style=discord.ButtonStyle.gray)
-    async def toggle_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Sort: pp", style=ButtonStyle.gray)
+    async def toggle_type(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.type += 1
         if self.type == len(self.types):
@@ -43,8 +43,8 @@ class ClearsView(discord.ui.View):
         button.label = f"Sort: {self.types[self.type]}"
         await interaction.message.edit(embed=self.get_embed(), view=self)
     
-    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
-    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Order: ↓", style=ButtonStyle.gray)
+    async def toggle_desc(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         if self.desc:
             self.desc = False
@@ -55,8 +55,8 @@ class ClearsView(discord.ui.View):
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
-    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Download", style=ButtonStyle.green)
+    async def download_button(self, interaction: Interaction, button: Button):
         await interaction.response.defer()
         if self.all:
             links = instance.get_all_clears(

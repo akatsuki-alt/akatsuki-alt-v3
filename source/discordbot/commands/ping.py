@@ -1,7 +1,6 @@
-from typing import List
-
-from discord import Message
 from discordbot.bot import Command
+from discord import Message
+from typing import List
 
 class PingCommand(Command):
     

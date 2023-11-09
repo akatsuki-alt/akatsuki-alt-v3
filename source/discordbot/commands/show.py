@@ -1,14 +1,13 @@
-import utils.api.akataltapi as akataltapi
 from utils.files import DataFile, exists
-from utils.api.servers import servers
 from utils.parser import parse_args
 from discordbot.bot import Command
 from discord import Message, Embed
 from config import BASE_PATH
 from typing import List
+
+import utils.api.akataltapi as akataltapi
 import shutil
 import time
-import json
 
 class ShowCommand(Command):
     

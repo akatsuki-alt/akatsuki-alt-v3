@@ -1,11 +1,10 @@
 from utils.api.akatsukialt.akataltapi import UserExtraLeaderboardTypeEnum
+from discord import Message, Embed, Interaction, ButtonStyle
+from discord.ui import View, Button, button
 from utils.api.akataltapi import instance
 from utils.parser import parse_args
 from discordbot.bot import Command
-from discord import Message, Embed
-from typing import List, Optional
-from discord.ui import View, button
-import discord
+from typing import List
 
 class LeaderboardView(View):
     
@@ -14,14 +13,14 @@ class LeaderboardView(View):
         self.api_options = api_options
         super().__init__()
     
-    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Previous", style=ButtonStyle.gray)
+    async def prev_button(self, interaction: Interaction, button: Button):    
         self.page = max(self.page-1, 1)
         await interaction.response.defer()
         await interaction.followup.edit_message(message_id=interaction.message.id, embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Next",style=ButtonStyle.gray)
+    async def next_button(self, interaction: Interaction, button: Button):    
         self.page += 1
         await interaction.response.defer()
         await interaction.followup.edit_message(message_id=interaction.message.id, embed=self.get_embed(), view=self)

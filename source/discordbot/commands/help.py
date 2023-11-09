@@ -1,7 +1,7 @@
+from discordbot.bot import Command, commands
+from discord import Message, Embed
 from typing import List
 
-from discord import Message, Embed
-from discordbot.bot import Command, commands
 import discord 
 
 class Select(discord.ui.Select):

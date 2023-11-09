@@ -1,11 +1,11 @@
+from utils.database import DBUserQueue, DBUserInfo
+from datetime import date, timedelta
+from utils.parser import parse_args
+from discordbot.bot import Command
+from discord import Message
 from typing import List
 
-from discord import Message
-from discordbot.bot import Command
-from utils.database import DBUserQueue, DBUserInfo
-from utils.parser import parse_args
 import utils.postgres as postgres
-from datetime import date, timedelta
 
 class AddQueueCommand(Command):
     

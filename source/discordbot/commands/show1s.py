@@ -1,16 +1,16 @@
-from typing import List, Optional
-
-from discord import Message
-from discordbot.bot import Command
-from utils.parser import parse_args
+from discord import Message, ButtonStyle, Interaction, Embed
+from utils.api.akatsukialt.akataltapi import ScoreSortEnum
+from discord.ui import View, Button, button
 from utils.api.akataltapi import instance
 from utils.beatmaps import load_beatmap
-import utils.postgres as postgres
-import discord
 from utils.mods import get_mods_simple
-from utils.api.akatsukialt.akataltapi import ScoreSortEnum
+from discordbot.bot import Command
+from utils.parser import parse_args
+from typing import List
 
-class FirstPlacesView(discord.ui.View):
+import utils.postgres as postgres
+
+class FirstPlacesView(View):
     
     def __init__(self, api_options):
         self.types = ['all', 'new', 'lost']
@@ -22,20 +22,20 @@ class FirstPlacesView(discord.ui.View):
         self.page = 1
         super().__init__()
 
-    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Previous", style=ButtonStyle.gray)
+    async def prev_button(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page = max(self.page-1, 1)
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Next", style=ButtonStyle.gray)
+    async def next_button(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page += 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
  
-    @discord.ui.button(label="Type: all",style=discord.ButtonStyle.gray)
-    async def toggle_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Type: all", style=ButtonStyle.gray)
+    async def toggle_type(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.type += 1
         if self.type == len(self.types):
@@ -44,8 +44,8 @@ class FirstPlacesView(discord.ui.View):
         button.label = f"Type: {self.types[self.type]}"
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Sort: pp",style=discord.ButtonStyle.gray)
-    async def toggle_sort_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Sort: pp", style=ButtonStyle.gray)
+    async def toggle_sort_type(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.type_sort += 1
         if self.type_sort == len(self.types_sort):
@@ -54,8 +54,8 @@ class FirstPlacesView(discord.ui.View):
         button.label = f"Sort: {self.types_sort[self.type_sort]}"
         await interaction.message.edit(embed=self.get_embed(), view=self)
     
-    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
-    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Order: ↓", style=ButtonStyle.gray)
+    async def toggle_desc(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         if self.desc:
             self.desc = False
@@ -66,8 +66,8 @@ class FirstPlacesView(discord.ui.View):
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
-    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Download", style=ButtonStyle.green)
+    async def download_button(self, interaction: Interaction, button: Button):
         await interaction.response.defer()
         links = instance.get_user_1s(
             user_id = self.api_options['user_id'],
@@ -81,13 +81,13 @@ class FirstPlacesView(discord.ui.View):
             beatmap_filter=self.api_options['beatmap_filter'],
             download_link=True
         )
-        embed = discord.Embed(title="Download options:", 
+        embed = Embed(title="Download options:", 
                       description="\n".join([f"[{key}]({value})" for (key,value) in links.items()]))
         await interaction.followup.send(embed=embed)
 
 
     def get_embed(self):
-        embed = discord.Embed(title=f"First places")
+        embed = Embed(title=f"First places")
         content = '```'
         with postgres.instance.managed_session() as session:
             first_places = instance.get_user_1s(
@@ -124,7 +124,7 @@ class FirstPlacesView(discord.ui.View):
     async def reply(self, message: Message):
         await message.reply(embed=self.get_embed(), view=self)
 
-class AllFirstPlacesView(discord.ui.View):
+class AllFirstPlacesView(View):
     
     def __init__(self, api_options):
         self.types_sort = [e.value for e in ScoreSortEnum]
@@ -134,20 +134,20 @@ class AllFirstPlacesView(discord.ui.View):
         self.page = 1
         super().__init__()
 
-    @discord.ui.button(label="Previous",style=discord.ButtonStyle.gray)
-    async def prev_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Previous", style=ButtonStyle.gray)
+    async def prev_button(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page = max(self.page-1, 1)
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Next",style=discord.ButtonStyle.gray)
-    async def next_button(self,  interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Next", style=ButtonStyle.gray)
+    async def next_button(self,  interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.page += 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
  
-    @discord.ui.button(label="Sort: pp",style=discord.ButtonStyle.gray)
-    async def toggle_sort_type(self, interaction:discord.Interaction, button:discord.ui.Button):    
+    @button(label="Sort: pp", style=ButtonStyle.gray)
+    async def toggle_sort_type(self, interaction: Interaction, button: Button):    
         await interaction.response.defer()   
         self.type_sort += 1
         if self.type_sort == len(self.types_sort):
@@ -156,8 +156,8 @@ class AllFirstPlacesView(discord.ui.View):
         button.label = f"Sort: {self.types_sort[self.type_sort]}"
         await interaction.message.edit(embed=self.get_embed(), view=self)
     
-    @discord.ui.button(label="Order: ↓",style=discord.ButtonStyle.gray)
-    async def toggle_desc(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Order: ↓", style=ButtonStyle.gray)
+    async def toggle_desc(self, interaction: Interaction, button: Button):
         await interaction.response.defer()   
         if self.desc:
             self.desc = False
@@ -168,8 +168,8 @@ class AllFirstPlacesView(discord.ui.View):
         self.page = 1
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-    @discord.ui.button(label="Download",style=discord.ButtonStyle.green)
-    async def download_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+    @button(label="Download", style=ButtonStyle.green)
+    async def download_button(self, interaction:Interaction, button: Button):
         await interaction.response.defer()
         links = instance.get_all_1s(
             server = self.api_options['server'],
@@ -181,13 +181,13 @@ class AllFirstPlacesView(discord.ui.View):
             beatmap_filter=self.api_options['beatmap_filter'],
             download_link=True
         )
-        embed = discord.Embed(title="Download options:", 
+        embed = Embed(title="Download options:", 
                       description="\n".join([f"[{key}]({value})" for (key,value) in links.items()]))
         await interaction.followup.send(embed=embed)
 
 
     def get_embed(self):
-        embed = discord.Embed(title=f"First places")
+        embed = Embed(title=f"First places")
         content = '```'
         with postgres.instance.managed_session() as session:
             first_places = instance.get_all_1s(
