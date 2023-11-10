@@ -36,6 +36,17 @@ class ScoreSortEnum(str, Enum):
     rank = "rank"
     date = "date"
 
+class BeatmapSortEnum(str, Enum):
+    artist = "artist"
+    title = "title"
+    version = "version"
+    mapper = "mapper"
+    stars_nm = "stars_nm"
+    length = "length"
+    ranked_status = "ranked_status"
+    approved_date = "approved_date"
+    last_checked = "last_checked"
+
 class DownloadEnum(str, Enum):
     csv = "csv"
     collection = "collection"
@@ -421,12 +432,14 @@ async def get_sets():
     return server_list
 
 @app.get("/beatmaps/list")
-async def get_beatmaps(page: int = 1, length: int = 100, beatmap_filter: str = "", download_as: str = ""):
+async def get_beatmaps(page: int = 1, length: int = 100, sort: str = BeatmapSortEnum.title, desc: bool = False, beatmap_filter: str = "", download_as: str = ""):
     beatmaps = list()
+    direction = sort_desc if desc else sort_asc
     with postgres.instance.managed_session() as session:
         query = session.query(DBBeatmap)
         if beatmap_filter:
             query = build_query(query, DBBeatmap, beatmap_filter.split(","))
+        query = query.order_by(direction(getattr(DBBeatmap, sort)))
         match download_as:
             case DownloadEnum.csv:
                 columns = [c.name for c in DBBeatmap.__table__.columns]
