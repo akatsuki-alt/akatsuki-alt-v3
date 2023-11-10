@@ -105,6 +105,18 @@ class DBBeatmap(Base):
     stars_dthr = Column('stars_dthr', Float)
     approved_date = Column('approved_date', Integer)
 
+class DBMostPlayed(Base):
+    __tablename__ = "user_most_played"
+
+    beatmap_id = Column('beatmap_id', Integer, ForeignKey('beatmaps.beatmap_id'), primary_key=True)
+    server = Column('server', String, primary_key=True)
+    user_id = Column('user_id', Integer, primary_key=True)
+    mode = Column('mode', SmallInteger, primary_key=True)
+    relax = Column('relax', SmallInteger, primary_key=True)
+    count = Column('count', Integer)
+    beatmap = relationship('DBBeatmap', backref='user_most_played', lazy='selectin', join_depth=2)
+
+
 class DBScore(Base):
     __tablename__ = "user_scores"
     

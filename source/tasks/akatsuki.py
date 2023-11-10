@@ -69,6 +69,14 @@ class AkatsukiTracker():
                             playtime = DBAKatsukiPlaytime(user_id = user.user_id, mode = user.mode, relax = user.relax, submitted_plays = 0, unsubmitted_plays = 0, most_played = 0)
                         for played_map in most_played:
                             if (beatmap := beatmaps.load_beatmap(session, played_map['beatmap']['beatmap_id'])) is not None:
+                                session.merge(DBMostPlayed(
+                                    beatmap_id = played_map['beatmap']['beatmap_id'],
+                                    server = "akatsuki",
+                                    user_id = user.user_id,
+                                    mode = user.mode,
+                                    relax = user.relax,
+                                    count = played_map['playcount']
+                                ))
                                 playtime.most_played += ((beatmap.length/beatmap.max_combo)*30) * played_map['playcount']
                         for score in scores:
                             if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
@@ -475,6 +483,24 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
                 offset = -1
                 break
             if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
+                most_played = session.get(DBMostPlayed, (
+                    beatmap.beatmap_id,
+                    "akatsuki",
+                    user_id,
+                    mode,
+                    relax
+                ))
+                if not most_played:
+                    most_played = DBMostPlayed(
+                        beatmap_id = beatmap.beatmap_id,
+                        server = "akatsuki",
+                        user_id = user_id,
+                        mode = mode,
+                        relax = relax,
+                        count = 0
+                    )
+                    session.merge(most_played)
+                most_played.count += 1
                 divisor = 1.5 if score['mods'] & 64 else 1
                 if score['completed'] > 1:
                     playtime.submitted_plays += (beatmap.length)/divisor
