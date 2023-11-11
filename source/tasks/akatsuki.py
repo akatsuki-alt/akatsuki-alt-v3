@@ -511,8 +511,8 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
                         score['count_50']  +
                         score['count_miss']
                     )) / divisor
-            session.merge(score_to_db(score, user_id, mode, relax), load=True)
-            session.commit()
+                session.merge(score_to_db(score, user_id, mode, relax), load=True)
+                session.commit()
         scores = {}
         for score in session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.completed == 3, DBScore.user_id == user_id).all():
             mode_str = f'{score.mode}+{score.relax}'
