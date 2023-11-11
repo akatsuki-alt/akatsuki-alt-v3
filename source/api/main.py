@@ -424,6 +424,11 @@ async def get_clan_stats(clan_id:int, server="akatsuki", mode:int=0, relax:int=0
     with postgres.instance.managed_session() as session:
         return session.get(DBClanStats, (server, clan_id, mode, relax, date))
 
+@app.get("/beatmap")
+async def get_beatmap(beatmap_id: int):
+    with postgres.instance.managed_session() as session:
+        return session.get(DBBeatmap, beatmap_id)
+
 @app.get("/beatmaps/server_sets")
 async def get_sets():
     server_list = {}
