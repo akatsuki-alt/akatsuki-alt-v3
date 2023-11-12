@@ -219,6 +219,7 @@ class BeatmapMaintainer():
                 for set in server.beatmap_sets:
                     if set in processed:
                         continue
+                    processed.append(set)
                     for x in range(12):
                         for mode in range(4):
                             cache = DBCompletionCache(key=f"stars_{set}_{mode}_{x}", value=0)
