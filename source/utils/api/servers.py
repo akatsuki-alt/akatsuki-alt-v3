@@ -1,4 +1,6 @@
+from typing import List, Tuple, Union
 import utils.api.akatsuki as akatsuki
+import utils.api.titanic as titanic
 from typing import *
 
 class Server:
@@ -41,4 +43,25 @@ class Akatsuki(Server):
         if (recent := akatsuki.get_user_recent(user_id=user, mode=mode, relax=relax, length=1)):
             return recent[0]
 
-servers = [Akatsuki()]
+class Titanic(Server):
+    
+    def __init__(self) -> None:
+        super().__init__("titanic", "https://osu.lekuru.xyz", ["titanic"], False, False, "Basic support")
+
+    def lookup_user(self, user: str | int) -> Tuple[str, int]:
+        if type(user) == int or user.isnumeric():
+            user_info = titanic.get_user_info(int(user))
+            if not user_info:
+                return None
+            return user_info['name'], user_info['id']
+        else:
+            id = titanic.lookup_user(user)
+            if id:
+                return user, id
+
+    def get_pfp(self, user: int) -> str:
+        return f"https://osu.lekuru.xyz/a/{user}?h=120"
+
+    
+
+servers = [Akatsuki(), Titanic()]
