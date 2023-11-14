@@ -1,8 +1,16 @@
 from utils.api.request import RequestHandler
+from enum import Enum
 from typing import *
 
 handler = RequestHandler(req_min=60)
 modes = ['osu', 'taiko', 'fruits', 'mania']
+
+class LeaderboardType(str, Enum):
+    pp = "performance"
+    ranked_score = "rscore"
+    total_score = "tscore"
+    country = "country"
+    ppv1 = "ppv1"
 
 class Achievement(TypedDict):
     category: str
@@ -126,6 +134,12 @@ class MostPlayed(TypedDict):
     beatmap: Beatmap
     count: int
 
+class LeaderboardUser(TypedDict):
+    pp: float
+    rank: int
+    user: Profile
+    user_id: int
+
 def lookup_user(username: str) -> int | None:
     req = handler.get(f"https://osu.lekuru.xyz/u/{username}")
     if not req.ok:
@@ -158,6 +172,12 @@ def get_user_most_played(user_id: int, length=50, page=1) -> List[MostPlayed] | 
 
 def get_user_top(user_id: int, mode: int, length=50, page=1) -> List[Score] | None:
     req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}/top/{modes[mode]}?limit={length}&offset={(page-1)*length}")
+    if not req.ok:
+        return
+    return req.json()
+
+def get_user_lb(mode: int, type: LeaderboardType = LeaderboardType.pp) -> List[LeaderboardUser] | None:
+    req = handler.get(f"https://osu.lekuru.xyz/api/rankings/{type.value}/{modes[mode]}?limit={length}&offset={(page-1)*length}")
     if not req.ok:
         return
     return req.json()
