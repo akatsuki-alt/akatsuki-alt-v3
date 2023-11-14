@@ -1,7 +1,6 @@
 from threading import Thread
 
 from tasks.beatmaps import BeatmapMaintainer
-from tasks.statistics import StatisticsTracker
 from tasks.akatsuki import AkatsukiTracker
 
 import discordbot.bot
@@ -29,7 +28,6 @@ if __name__ == "__main__":
     threads = [
         Thread(target=event_listener),
         Thread(target=BeatmapMaintainer().main),
-        Thread(target=StatisticsTracker().main),
         Thread(target=AkatsukiTracker().main),
         Thread(target=api.main.main),
         Thread(target=discordbot.bot.main),
