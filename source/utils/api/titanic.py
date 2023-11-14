@@ -2,6 +2,7 @@ from utils.api.request import RequestHandler
 from typing import *
 
 handler = RequestHandler(req_min=60)
+modes = ['osu', 'taiko', 'fruits', 'mania']
 
 class Achievement(TypedDict):
     category: str
@@ -121,6 +122,10 @@ class Score(TypedDict):
     total_score: int
     user_id: int    
 
+class MostPlayed(TypedDict):
+    beatmap: Beatmap
+    count: int
+
 def lookup_user(username: str) -> int | None:
     req = handler.get(f"https://osu.lekuru.xyz/u/{username}")
     if not req.ok:
@@ -134,8 +139,25 @@ def get_user_info(user_id: int) -> Profile | None:
     return req.json()
 
 def get_user_recent(user_id: int, mode: int) -> List[Score] | None:
-    modes = ['osu', 'taiko', 'fruits', 'mania']
     req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}/recent/{modes[mode]}")
+    if not req.ok:
+        return
+    return req.json()
+
+def get_user_first_places(user_id: int, mode: int, length=50, page=1) -> List[Score] | None:
+    req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}/first/{modes[mode]}?limit={length}&offset={(page-1)*length}")
+    if not req.ok:
+        return
+    return req.json()
+
+def get_user_most_played(user_id: int, length=50, page=1) -> List[MostPlayed] | None:
+    req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}/plays?limit={length}&offset={(page-1)*length}")
+    if not req.ok:
+        return
+    return req.json()
+
+def get_user_top(user_id: int, mode: int, length=50, page=1) -> List[Score] | None:
+    req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}/top/{modes[mode]}?limit={length}&offset={(page-1)*length}")
     if not req.ok:
         return
     return req.json()
