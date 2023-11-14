@@ -136,7 +136,12 @@ class MostPlayed(TypedDict):
 
 class LeaderboardUser(TypedDict):
     pp: float
-    rank: int
+    ppv1_rank: int
+    score_rank: int
+    total_score_rank: int
+    global_rank: int
+    country_rank: int
+    index: int
     user: Profile
     user_id: int
 
