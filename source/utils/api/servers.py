@@ -1,4 +1,5 @@
 from typing import List, Tuple, Union
+
 import utils.api.akatsuki as akatsuki
 import utils.api.titanic as titanic
 from typing import *
@@ -62,6 +63,28 @@ class Titanic(Server):
     def get_pfp(self, user: int) -> str:
         return f"https://osu.lekuru.xyz/a/{user}?h=120"
 
-    
+    def get_recent(self, user: int, mode: int, relax: int) -> akatsuki.Score | None:
+         if (recent := titanic.get_user_recent(user_id=user, mode=mode)):
+            if recent[0]:
+                return {'id': recent[0]['id'], 
+                        'score': recent[0]['total_score'],
+                        'max_combo': recent[0]['max_combo'],
+                        'full_combo': recent[0]['perfect'],
+                        'mods': recent[0]['mods'],
+                        'count_300': recent[0]['n300'],
+                        'count_100': recent[0]['n100'],
+                        'count_50': recent[0]['n50'],
+                        'count_geki': recent[0]['nGeki'],
+                        'count_katu': recent[0]['nKatu'],
+                        'count_miss': recent[0]['nMiss'],
+                        'accuracy': recent[0]['acc']*100,
+                        'pp': recent[0]['pp'],
+                        'rank': recent[0]['grade'],
+                        'pinned': recent[0]['pinned'],
+                        'play_mode': recent[0]['mode'],
+                        'completed': 3, # TODO
+                        'beatmap': {'beatmap_id': recent[0]['beatmap']['id']},
+                        'time': recent[0]['submitted_at']
+                        }
 
 servers = [Akatsuki(), Titanic()]
