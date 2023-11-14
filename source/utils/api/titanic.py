@@ -176,7 +176,7 @@ def get_user_top(user_id: int, mode: int, length=50, page=1) -> List[Score] | No
         return
     return req.json()
 
-def get_user_lb(mode: int, type: LeaderboardType = LeaderboardType.pp) -> List[LeaderboardUser] | None:
+def get_user_lb(mode: int, type: LeaderboardType = LeaderboardType.pp, length=50, page=1) -> List[LeaderboardUser] | None:
     req = handler.get(f"https://osu.lekuru.xyz/api/rankings/{type.value}/{modes[mode]}?limit={length}&offset={(page-1)*length}")
     if not req.ok:
         return
