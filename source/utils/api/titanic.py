@@ -4,6 +4,7 @@ from typing import *
 
 handler = RequestHandler(req_min=60)
 modes = ['osu', 'taiko', 'fruits', 'mania']
+date_format = "%a, %d %b %Y %H:%M:%S %Z"
 
 class LeaderboardType(str, Enum):
     pp = "performance"
