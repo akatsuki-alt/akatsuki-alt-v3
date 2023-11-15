@@ -68,7 +68,11 @@ class UsersView(View):
             embed.description = content
             return embed
         for user in users:
-            country = pycountry.countries.get(alpha_2=user.country).name.split(",")[0]
+            country = pycountry.countries.get(alpha_2=user.country)
+            if country:
+                country = country.name.split(",")[0]
+            else:
+                country = "Unknown"
             registered_on = user.registered_on.replace("T", " ")
             latest_activity = user.latest_activity.replace("T", " ")
             content += f"{user.username}, {country}, {user.followers} followers\n\tRegistered:  {registered_on}\n\tLast Active: {latest_activity}\n"
