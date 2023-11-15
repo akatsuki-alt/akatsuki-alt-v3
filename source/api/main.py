@@ -398,7 +398,7 @@ async def get_user_info(user_id:int, server="akatsuki"):
 async def get_user_list(server: str = "akatsuki", desc: bool = True, sort: str = "user_id", length: int = 100, page: int = 1, filter: str = ""):
     direction = sort_desc if desc else sort_asc
     with postgres.instance.managed_session() as session:
-        query = session.query(DBUser).order_by(direction(getattr(DBUser, sort)))
+        query = session.query(DBUser).filter(DBUser.server == server).order_by(direction(getattr(DBUser, sort)))
         if filter:
             query = build_query(query, DBUser, filter.split(","))
         query = query.offset(((page-1)*length)).limit(length)
@@ -471,7 +471,7 @@ async def get_beatmaps(page: int = 1, length: int = 100, sort: str = BeatmapSort
 async def get_requests_metrics():
     metrics = list()
     with postgres.instance.managed_session() as session:
-        for metric in session.query(DBMetricsRequests):
+        for metric in session.query(DBMetricsRequests).order_by(desc(DBMetricsRequests.requests)).all():
             metrics.append(metric)
     return metrics
 
