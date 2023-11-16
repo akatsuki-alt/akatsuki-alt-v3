@@ -49,7 +49,7 @@ class AkatsukiTracker():
     def process_queue(self):
         while True:
             with postgres.instance.managed_session() as session:
-                queue = session.query(DBUserQueue).filter(datetime.datetime.now().date() > DBUserQueue.date).all()
+                queue = session.query(DBUserQueue).filter(DBUserQueue.server == "akatsuki", datetime.datetime.now().date() > DBUserQueue.date).all()
                 for user in queue:
                     logger.info(f"Processing user in queue: {user.user_id}")
                     user_info = akat.get_user_info(user_id=user.user_id)
