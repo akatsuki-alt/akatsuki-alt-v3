@@ -125,7 +125,7 @@ class DBScore(Base):
     user_id = Column('user_id', Integer, primary_key=True)
     mode = Column('mode', SmallInteger, primary_key=True)
     relax = Column('relax', SmallInteger, primary_key=True)
-    score_id = Column('score_id', BigInteger, primary_key=True, unique=True)
+    score_id = Column('score_id', BigInteger, primary_key=True)
     accuracy = Column('accuracy', Float)
     mods = Column('mods', Integer)
     pp = Column('pp', Float)
