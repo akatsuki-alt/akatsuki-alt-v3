@@ -84,9 +84,9 @@ def mods_from_string(mods_str):
 
 def get_mods_simple(magic_number):
     mods = get_mods(magic_number)
-    if "NC" in mods:
+    if "NC" in mods and "DT" in mods:
         mods.remove("DT")
-    if "PF" in mods:
+    if "PF" in mods and "SD" in mods:
         mods.remove("SD")
     return mods
 
