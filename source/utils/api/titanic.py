@@ -129,7 +129,8 @@ class Score(TypedDict):
     pp: float
     submitted_at: str
     total_score: int
-    user_id: int    
+    user_id: int
+    status: int
 
 class MostPlayed(TypedDict):
     beatmap: Beatmap
@@ -150,12 +151,10 @@ class LeaderboardUser(TypedDict):
     user_id: int
 
 def lookup_user(username: str) -> int | None:
-    req = handler.get(f"https://osu.lekuru.xyz/u/{username}")
-    if not req.ok:
-        return
-    return int(req.url.split("/")[-1])
+    if (user := get_user_info(username)) is not None:
+        return user['id']
 
-def get_user_info(user_id: int) -> Profile | None:
+def get_user_info(user_id: int | str) -> Profile | None:
     req = handler.get(f"https://osu.lekuru.xyz/api/profile/{user_id}")
     if not req.ok:
         return
