@@ -120,13 +120,12 @@ class DBMostPlayed(Base):
 class DBScore(Base):
     __tablename__ = "user_scores"
     
-    db_score_id = Column('db_score_id', BigInteger, autoincrement=True, unique=True)
     beatmap_id = Column('beatmap_id', Integer, ForeignKey('beatmaps.beatmap_id'))
     server = Column('server', String, primary_key=True)
     user_id = Column('user_id', Integer, primary_key=True)
     mode = Column('mode', SmallInteger, primary_key=True)
     relax = Column('relax', SmallInteger, primary_key=True)
-    score_id = Column('score_id', BigInteger, primary_key=True)
+    score_id = Column('score_id', String, unique=True, primary_key=True)
     accuracy = Column('accuracy', Float)
     mods = Column('mods', Integer)
     pp = Column('pp', Float)
@@ -221,8 +220,7 @@ class DBUserFirstPlace(Base):
     mode = Column("mode", SmallInteger, primary_key=True)
     relax = Column("relax", SmallInteger, primary_key=True)
     date = Column('date', Date, primary_key=True)
-    score_id = Column('score_id', BigInteger, primary_key=True)
-    db_score_id = Column('db_score_id', BigInteger, ForeignKey('user_scores.db_score_id'))
+    score_id = Column('score_id', String, ForeignKey('user_scores.score_id'), primary_key=True)
     score = relationship('DBScore', backref='user_first_places', join_depth=2)
 
 class DBClanStats(Base):
