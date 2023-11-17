@@ -95,7 +95,7 @@ class AkatsukiTracker():
                     for score in first_places[1]:
                         if not beatmaps.load_beatmap(session, score['beatmap']['beatmap_id']):
                             continue
-                        if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == int(score['id'])).first():
+                        if not session.query(DBScore).filter(DBScore.server == "akatsuki", DBScore.score_id == f"akatsuki.{score['id']}").first():
                             session.add(score_to_db(score, user.user_id, user.mode, user.relax))
                         session.merge(DBUserFirstPlace(
                             server = "akatsuki",
@@ -103,7 +103,7 @@ class AkatsukiTracker():
                             mode = user.mode,
                             relax = user.relax,
                             date = user.date,
-                            score_id = int(score['id'])
+                            score_id = f"akatsuki.{score['id']}"
                         ))
                     update_user(session, user.user_id, user.mode, user.relax, user.date, user_info, add_to_queue=False, fetch_recent=False)
                     session.delete(user)
@@ -479,7 +479,7 @@ def update_user(session, user_id: int, mode: int, relax: int, date: date, user_i
         if not scores:
             break
         for score in scores:
-            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==int(score['id'])).first():
+            if session.query(DBScore).filter(DBScore.server =="akatsuki", DBScore.score_id==f"akatsuki.{score['id']}").first():
                 offset = -1
                 break
             if (beatmap := beatmaps.load_beatmap(session, score['beatmap']['beatmap_id'])) is not None:
@@ -640,7 +640,7 @@ def score_to_db(score: akat.Score, user_id,  mode, relax):
             user_id = user_id,
             mode = mode,
             relax = relax,
-            score_id = int(score['id']),
+            score_id = f"akatsuki.{score['id']}",
             accuracy = score['accuracy'],
             mods = score['mods'],
             pp = score['pp'],
