@@ -4,6 +4,7 @@ from discordbot.commands.leaderboard import ShowLeaderboardCommand
 from discordbot.commands.show import ShowCommand, ResetCommand
 from discordbot.commands.setdefault import SetDefaultCommand
 from discordbot.commands.searchmaps import SearchmapsCommand
+from discordbot.commands.settings import SettingsCommand
 from discordbot.commands.addqueue import AddQueueCommand
 from discordbot.commands.servers import ServersCommand
 from discordbot.commands.beatmap import BeatmapCommand
@@ -32,3 +33,4 @@ bot.commands.append(AddQueueCommand())
 bot.commands.append(UsersCommand())
 bot.commands.append(BeatmapCommand())
 bot.commands.append(SearchmapsCommand())
+bot.commands.append(SettingsCommand())

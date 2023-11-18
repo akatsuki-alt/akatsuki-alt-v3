@@ -87,4 +87,4 @@ class Titanic(Server):
                         'time': recent[0]['submitted_at']
                         }
 
-servers = [Akatsuki(), Titanic()]
+servers: List[Server] = [Akatsuki(), Titanic()]
