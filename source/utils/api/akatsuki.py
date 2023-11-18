@@ -261,6 +261,22 @@ def get_map_info(beatmap_id: int) -> Beatmap:
     res = get(f"https://akatsuki.gg/api/v1/beatmaps?b={beatmap_id}")
     return res
 
+def get_map_scores(beatmap_id: int, mode=0, relax=0, pages=1) -> List[Tuple[Score, User]]:
+    page = 1
+    scores = list()
+    while True:
+        req = get(f"https://akatsuki.gg/api/v1/scores?b={beatmap_id}&m={mode}&relax={relax}&p={page}&l=100")
+        if not req['scores']:
+            break
+        for apiscore in req['scores']:
+            user = apiscore['user']
+            del apiscore['user']
+            scores.append((apiscore, user))
+        page += 1
+        if page>pages:
+            break
+    return scores
+
 def get_clan_first_leaderboard(mode=0, relax=0, pages=1) -> List[Tuple[Clan, int]]:
     page = 1
     clans = list()
