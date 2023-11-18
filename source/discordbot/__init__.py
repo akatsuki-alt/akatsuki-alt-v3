@@ -1,5 +1,6 @@
 from discordbot.commands.showclears import ShowClearsCommand, ShowServerClearsCommand
 from discordbot.commands.show1s import Show1sCommand, ShowServer1sCommand
+from discordbot.commands.clanleaderboard import ClanLeaderboardCommand
 from discordbot.commands.leaderboard import ShowLeaderboardCommand
 from discordbot.commands.show import ShowCommand, ResetCommand
 from discordbot.commands.setdefault import SetDefaultCommand
@@ -34,3 +35,4 @@ bot.commands.append(UsersCommand())
 bot.commands.append(BeatmapCommand())
 bot.commands.append(SearchmapsCommand())
 bot.commands.append(SettingsCommand())
+bot.commands.append(ClanLeaderboardCommand())
