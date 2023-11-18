@@ -110,9 +110,9 @@ class AkatsukiTracker():
                     session.commit()
                     added = 0
                     queries = [
-                        session.query(DBLiveUser).filter(DBLiveUser.global_rank < 500, DBLiveUser.mode == 0, DBLiveUser.relax == 1),
-                        session.query(DBLiveUser).filter(DBLiveUser.global_rank < 200),
-                        session.query(DBLiveUserScore).filter(DBLiveUserScore.ranked_score > 0)
+                        session.query(DBLiveUser).filter(DBLiveUser.server == "akatsuki", DBLiveUser.global_rank < 500, DBLiveUser.mode == 0, DBLiveUser.relax == 1),
+                        session.query(DBLiveUser).filter(DBLiveUser.server == "akatsuki", DBLiveUser.global_rank < 200),
+                        session.query(DBLiveUserScore).filter(DBLiveUserScore.server == "akatsuki", DBLiveUserScore.ranked_score > 0)
                     ]
                     for query in queries:
                         for user in query.all():
