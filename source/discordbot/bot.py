@@ -1,5 +1,6 @@
+
 from utils.api.servers import servers, Server
-from utils.database import DBDiscordLink
+from utils.database import DBDiscordLink, DBDiscordServer
 from difflib import SequenceMatcher
 from utils.logger import get_logger
 from discord.flags import Intents
@@ -7,6 +8,7 @@ from discord import Message
 from typing import *
 
 import utils.postgres as postgres
+import discordbot.tasks as tasks
 import traceback
 import discord
 import config
@@ -46,12 +48,23 @@ class Client(discord.Client):
 
     async def on_ready(self):
         print(f'Logged on as {self.user}!')
+        tasks.process_events.start()
 
     async def on_message(self, message: Message):
         if message.author.id == self.user.id:
             return
-        if message.content.startswith("!"):
-            split = shlex.split(message.content[1:])
+        prefix = "!"
+        if message.guild:
+            with postgres.instance.managed_session() as session:
+                if (settings := session.get(DBDiscordServer, message.guild.id)) is not None:
+                    prefix = settings.prefix
+                else:
+                    session.add(DBDiscordServer(
+                        guild_id = message.guild.id
+                    ))
+                    session.commit()
+        if message.content.startswith(prefix):
+            split = shlex.split(message.content[len(prefix):])
             most_similar = (0, 'none')
             for command in self.commands:
                 if split[0] in command.triggers:

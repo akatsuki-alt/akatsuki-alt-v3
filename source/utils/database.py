@@ -249,6 +249,13 @@ class DBDiscordLink(Base):
     default_relax = Column("default_relax", SmallInteger, default=0)
     servers = Column("servers", JSONB, default={})
 
+class DBDiscordServer(Base):
+    __tablename__ = "discord_server"
+    
+    guild_id = Column("guild_id", BigInteger, primary_key=True)
+    prefix = Column("prefix", String, default="kompir!")
+    default_server = Column("default_server", String, default="akatsuki")
+
 class DBMetricsRequests(Base):
     __tablename__ = "metrics_requests"
     
