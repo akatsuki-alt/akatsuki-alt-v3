@@ -22,6 +22,8 @@ class AkatsukiTracker():
     def main(self):
         queue_thread = Thread(target=self.process_queue)
         queue_thread.start()
+        map_crawler_thread = Thread(target=self.crawl_loved_maps)
+        map_crawler_thread.start()
         while True:
             with postgres.instance.managed_session() as session:
                 res = session.get(database.DBTaskStatus, "akatsuki_score_lb")
@@ -393,6 +395,28 @@ class AkatsukiTracker():
                 session.commit()
         logger.info(f"clan leaderboard update took {(time.time()-start)/60:.2f} minutes.")
 
+    def crawl_loved_maps(self):
+        modes = ((0,0),(0,1),(0,2),(1,0),(1,1),(2,0),(2,1),(3,0))
+        while True:
+            with postgres.instance.managed_session() as session:
+                for beatmap in session.query(DBBeatmap).filter(DBBeatmap.ranked_status['akatsuki'].astext.cast(Integer) == 4).all():
+                    if not session.get(DBCrawledMaps, ("akatsuki", beatmap.beatmap_id)):
+                        scores = 0
+                        for mode, relax in modes:
+                            for score, user in akat.get_map_scores(beatmap.beatmap_id, mode, relax, 1000000):
+                                scores += 1
+                                score['beatmap'] = {'beatmap_id': beatmap.beatmap_id}
+                                session.merge(score_to_db(score, user['id'], mode, relax))
+                        if scores:
+                            logger.info(f"Crawled loved map {beatmap.beatmap_id} ({scores} scores)")
+                        session.add(DBCrawledMaps(
+                            server = "akatsuki",
+                            beatmap_id = beatmap.beatmap_id,
+                            date = datetime.datetime.today().date()
+                        ))
+                        session.commit()
+            time.sleep(3600)
+
     def check_banned_users(self):
         with postgres.instance.managed_session() as session:
             for user in session.query(DBUser).filter(DBUser.server == "akatsuki", (datetime.datetime.now() - DBUser.latest_activity) < timedelta(days=59)).all():
@@ -439,7 +463,7 @@ class AkatsukiTracker():
         ).all():
             session.delete(score)
         session.commit()
-
+    
 def update_user(session, user_id: int, mode: int, relax: int, date: date, user_info: akat.User, add_to_queue=True, fetch_recent=True):
     stats = session.query(DBStats).filter(DBStats.server == "akatsuki", DBStats.user_id == user_id, DBStats.mode == mode, DBStats.relax == relax, DBStats.date == date).first()
     queue = True
@@ -632,7 +656,7 @@ def stats_to_db(session: postgres.Session, user_id: int, mode: int, relax: int, 
         
         first_places = first_places_count
     )
-
+    
 def score_to_db(score: akat.Score, user_id,  mode, relax):
     return DBScore(
             beatmap_id = score['beatmap']['beatmap_id'],

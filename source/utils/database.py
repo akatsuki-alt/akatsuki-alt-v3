@@ -269,4 +269,9 @@ class DBCompletionCache(Base):
     key = Column("key", String, primary_key=True)
     value = Column("value", Integer)
 
+class DBCrawledMaps(Base):
+    __tablename__ = "crawled_maps"
     
+    server = Column("server", String, primary_key=True)
+    beatmap_id = Column("beatmap_id", BigInteger, primary_key=True)
+    date = Column('date', Date)
