@@ -117,6 +117,8 @@ async def get_clan_leaderboard(server="akatsuki", mode:int=0, relax:int=0, date=
         query = session.query(DBClanStats).filter(DBClanStats.server == server, DBClanStats.mode == mode, 
                                                      DBClanStats.relax == relax, DBClanStats.date == date).order_by(
                                                          text(order))
+        if order == "global_rank_1s":
+            query = query.filter(DBClanStats.global_rank_1s > 0)
         for stats in query.offset((page-1)*length).limit(length).all():
             clans.append(stats)
         return {'total': query.count(), 'clans': clans}
