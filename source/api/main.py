@@ -408,7 +408,7 @@ async def get_user_list(server: str = "akatsuki", desc: bool = True, sort: str =
 @app.get("/clan/info")
 async def get_clan_info(clan_id:int, server="akatsuki"):
     with postgres.instance.managed_session() as session:
-        return session.gebeatmap_setst(DBClan, (server, clan_id))
+        return session.get(DBClan, (server, clan_id))
 
 @app.get("/clan/members")
 async def get_clan_members(clan_id:int, server="akatsuki"):
