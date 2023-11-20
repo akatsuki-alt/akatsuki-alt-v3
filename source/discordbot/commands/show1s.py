@@ -107,7 +107,7 @@ class FirstPlacesView(View):
                 content += "No scores :/```"
                 embed.description = content
                 return embed
-            embed.title += f" ({first_places[0]})"
+            embed.title += f" ({first_places[0]:,})"
             for first_place in first_places[1]:
                 if (beatmap := load_beatmap(session, first_place.beatmap_id)) is not None:
                     title = f"{beatmap.artist} - {beatmap.title} [{beatmap.version}]"
