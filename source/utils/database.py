@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy import *
 
 
@@ -104,6 +104,18 @@ class DBBeatmap(Base):
     stars_dtez = Column('stars_dtez', Float)
     stars_dthr = Column('stars_dthr', Float)
     approved_date = Column('approved_date', Integer)
+
+class DBBeatmapPack(Base):
+    __tablename__ = "beatmap_packs"
+
+    author = Column("author", String)
+    date = Column("date", DateTime)
+    name = Column("name", String)
+    no_diff_reduction = Column("no_diff_reduction", Boolean)
+    tag = Column("tag", String)
+    url = Column("url", String)
+    
+    beatmapset_ids = Column("beatmap_ids", ARRAY(Integer))
 
 class DBMostPlayed(Base):
     __tablename__ = "user_most_played"
