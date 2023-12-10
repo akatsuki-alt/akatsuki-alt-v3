@@ -112,7 +112,7 @@ class DBBeatmapPack(Base):
     date = Column("date", DateTime)
     name = Column("name", String)
     no_diff_reduction = Column("no_diff_reduction", Boolean)
-    tag = Column("tag", String)
+    tag = Column("tag", String, primary_key=True)
     url = Column("url", String)
     
     beatmapset_ids = Column("beatmap_ids", ARRAY(Integer))
