@@ -1,21 +1,19 @@
 from sqlalchemy.orm.attributes import flag_modified
 from utils.parser import parse_akatsuki_embed
 from ossapi import BeatmapsetSearchCategory
+from datetime import datetime, timedelta
 from utils.api.servers import servers
 from utils.logger import get_logger
 from sqlalchemy import or_, Integer
+from utils.database import *
+from typing import *
+
 import utils.postgres as postgres
 import utils.database as database
 import utils.api.bancho as bancho
 import utils.beatmaps as beatmaps
 import utils.selfbot as selfbot
-
-from datetime import datetime, timedelta
-from utils.database import *
-from typing import *
-import math
 import time
-import re
 
 logger = get_logger("beatmap_maintainer")
 
