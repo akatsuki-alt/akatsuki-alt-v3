@@ -35,7 +35,7 @@ def _osudirect_download(beatmap_id) -> bool:
     )
     if not response.ok:
         logger.warning(f"GET {response.url} {response.status_code}")
-        logger.warning(f"{response.text}")
+        #logger.warning(f"{response.text}")
         return False
     #logger.info(f"GET {response.url} {response.status_code}")
     file = BinaryFile(f"{config.BASE_PATH}/beatmaps/{beatmap_id}.osu.gz")

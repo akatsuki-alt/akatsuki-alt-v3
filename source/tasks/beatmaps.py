@@ -51,6 +51,10 @@ class BeatmapMaintainer():
                 if not res or (time.time()-res.last_run)/60/60>1:
                     self.build_beatmap_cache()
                     session.merge(database.DBTaskStatus(task_name="build_beatmap_cache", last_run=time.time()), load=True)
+                res = session.get(database.DBTaskStatus, "update_beatmap_packs")
+                if not res or (time.time()-res.last_run)/60/60>1:
+                    self.update_packs()
+                    session.merge(database.DBTaskStatus(task_name="update_beatmap_packs", last_run=time.time()), load=True)
                     session.commit()
             time.sleep(30)
     
@@ -209,7 +213,43 @@ class BeatmapMaintainer():
                         pass
             session.commit()
         logger.info(f"Imported {imported} maps.")
-        
+    
+    def update_packs(self):
+        logger.info(f"Updating beatmap packs...")
+        with postgres.instance.managed_session() as session:
+            cursor = None
+            added = 0
+            while True:
+                packs = bancho.client.beatmap_packs(cursor_string=cursor)
+                if not packs.beatmap_packs:
+                    break
+                cursor = packs.cursor_string
+                for pack in packs.beatmap_packs:
+                    if session.get(DBBeatmapPack, pack.tag):
+                        cursor = None
+                        break
+                    beatmapsets = list()
+                    for beatmapset in bancho.client.beatmap_pack(pack.tag).beatmapsets:
+                        beatmapsets.append(beatmapset.id)
+                        # beatmaps are not loaded
+                        beatmapset = bancho.client.beatmapset(beatmapset.id)
+                        for beatmap in beatmapset.beatmaps:
+                            beatmaps.load_beatmap(session, beatmap.id).packs = ",".join(beatmapset.pack_tags)
+                    session.add(DBBeatmapPack(
+                        author = pack.author,
+                        date = pack.date,
+                        name = pack.name,
+                        no_diff_reduction = pack.no_diff_reduction,
+                        tag = pack.tag,
+                        url = pack.url,
+                        beatmapset_ids = beatmapsets
+                    ))
+                    added += 1
+                if not cursor:
+                    break
+            logger.info(f"Found {added} beatmap packs.")
+            session.commit()
+
     def build_beatmap_cache(self):
         with postgres.instance.managed_session() as session:
             for object in session.query(database.DBCompletionCache):
