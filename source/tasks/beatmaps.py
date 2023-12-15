@@ -54,6 +54,11 @@ class BeatmapMaintainer():
                     self.update_packs()
                     session.merge(database.DBTaskStatus(task_name="update_beatmap_packs", last_run=time.time()), load=True)
                     session.commit()
+                res = session.get(database.DBTaskStatus, "update_spotlight_maps")
+                if not res or (time.time()-res.last_run)/60/60>1:
+                    self.update_spotlight_maps()
+                    session.merge(database.DBTaskStatus(task_name="update_spotlight_maps", last_run=time.time()), load=True)
+                    session.commit()
             time.sleep(30)
     
     def update_bancho_maps(self):
@@ -248,6 +253,30 @@ class BeatmapMaintainer():
             logger.info(f"Found {added} beatmap packs.")
             session.commit()
 
+    def update_spotlight_maps(self):
+        logger.info(f"Updating spotlight maps...")
+        with postgres.instance.managed_session() as session:
+            cursor = None
+            updated = 0
+            while True:
+                beatmapsets = bancho.client.search_beatmapsets(cursor=cursor, force_spotlights=True)
+                found = False
+                for beatmapset in beatmapsets.beatmapsets:
+                    for beatmap in beatmapset.beatmaps:
+                        if (dbmap := session.get(DBBeatmap, beatmap.id)):
+                            if dbmap.spotlight:
+                                found = True
+                            else:
+                                dbmap.spotlight = True
+                                updated +=1
+                        else:
+                            beatmaps.load_beatmap(session, beatmap.id)
+                            updated +=1
+                if found or not beatmapsets.beatmapsets:
+                    break
+            session.commit()
+            logger.info(f"Updated {updated} spotlight maps.")
+                
     def build_beatmap_cache(self):
         with postgres.instance.managed_session() as session:
             for object in session.query(database.DBCompletionCache):
