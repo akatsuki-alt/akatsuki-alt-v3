@@ -1,13 +1,17 @@
+from fastapi import FastAPI, Response
+from fastapi.responses import PlainTextResponse
 from starlette.responses import StreamingResponse
 from utils.api.servers import servers
-from fastapi import FastAPI, Response
 from api.filter import build_query
+from sqlalchemy.orm import aliased
+from sqlalchemy import and_, not_
 from utils.database import *
 
 import utils.collections as collections
 import utils.postgres as postgres
 import datetime
 import uvicorn
+
 
 sort_desc = desc
 sort_asc = asc
@@ -439,13 +443,41 @@ async def get_sets():
     return server_list
 
 @app.get("/beatmaps/list")
-async def get_beatmaps(page: int = 1, length: int = 100, sort: str = BeatmapSortEnum.title, desc: bool = False, beatmap_filter: str = "", download_as: str = ""):
+async def get_beatmaps(page: int = 1, length: int = 100, sort: str = BeatmapSortEnum.title, desc: bool = False, unplayed_by_filter: str = "", beatmap_filter: str = "", download_as: str = ""):
     beatmaps = list()
     direction = sort_desc if desc else sort_asc
     with postgres.instance.managed_session() as session:
         query = session.query(DBBeatmap)
         if beatmap_filter:
             query = build_query(query, DBBeatmap, beatmap_filter.split(","))
+        
+        if unplayed_by_filter:
+            try:
+                args = unplayed_by_filter.split(",")
+                mode = int(args[0])
+                relax = int(args[1])
+                user_id = int(args[2])
+                server = str(args[3])
+            except:
+                return PlainTextResponse(status_code=400, content="Invalid unplayed_by_filter syntax! Valid syntax: mode:int,relax:int,user_id:int,server:str")
+            
+            # Subquery to filter DBScore objects
+            subquery = (session.query(DBScore.beatmap_id).filter(
+                DBScore.mode == mode,
+                DBScore.relax == relax,
+                DBScore.server == server,
+                DBScore.user_id == user_id
+            ).subquery())
+
+            # Black magic
+            db_beatmap_alias = aliased(DBBeatmap)
+                        
+            query = (
+                query
+                .outerjoin(db_beatmap_alias, DBBeatmap.beatmap_id == db_beatmap_alias.beatmap_id)
+                .filter(not_(DBBeatmap.beatmap_id.in_(subquery)))
+            )
+                
         query = query.order_by(direction(getattr(DBBeatmap, sort)))
         match download_as:
             case DownloadEnum.csv:
